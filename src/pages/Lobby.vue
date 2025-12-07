@@ -24,6 +24,26 @@
       <button @click="error = null" class="ml-4 text-white font-bold">×</button>
     </div>
 
+    <!-- 🔍 DEBUG PANEL - TOP RIGHT -->
+    <div class="fixed top-5 left-5 bg-black bg-opacity-80 text-white p-4 rounded-lg text-xs max-w-md z-40 max-h-96 overflow-y-auto">
+      <div class="font-bold mb-2">🔍 Debug Panel</div>
+      <div class="space-y-1">
+        <div>Room: {{ roomCode }}</div>
+        <div>User: {{ username }} ({{ isHost ? 'HOST' : 'GUEST' }})</div>
+        <div>Players: {{ players.length }}</div>
+        <div>Messages: {{ messages.length }}</div>
+        <div>Redirecting: {{ isRedirecting }}</div>
+        <hr class="my-2 border-gray-600">
+        <div class="font-bold">Last 3 Messages:</div>
+        <div v-for="(msg, idx) in messages.slice(-3)" :key="idx" class="pl-2 border-l-2 border-blue-500 mb-2">
+          <div>Type: {{ msg.type }}</div>
+          <div>Sender: {{ msg.sender }}</div>
+          <div class="truncate">Message: {{ msg.message }}</div>
+          <div v-if="msg.data">Data: {{ JSON.stringify(msg.data) }}</div>
+        </div>
+      </div>
+    </div>
+
     <div class="relative z-10 max-w-4xl mx-auto">
       <!-- Header with Room Code -->
       <div class="text-center mb-8">
@@ -56,7 +76,6 @@
             <p class="text-2xl font-bold text-white">{{ roomCode }}</p>
           </div>
 
-          <!-- Copy button - hanya untuk host -->
           <button
             v-if="isHost"
             @click="copyRoomCode"
@@ -84,7 +103,7 @@
       </div>
 
       <div class="grid md:grid-cols-3 gap-6">
-        <!-- Players List - SAMA UNTUK HOST DAN GUEST -->
+        <!-- Players List -->
         <div
           class="md:col-span-2 bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
         >
@@ -162,7 +181,6 @@
               </div>
             </li>
 
-            <!-- Empty slots -->
             <li
               v-for="n in maxPlayers - players.length"
               :key="'empty-' + n"
@@ -173,9 +191,8 @@
           </ul>
         </div>
 
-        <!-- Sidebar - BERBEDA ANTARA HOST DAN GUEST -->
+        <!-- Sidebar -->
         <div class="space-y-6">
-          <!-- HOST: Game Settings & Actions -->
           <template v-if="isHost">
             <div
               class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
@@ -262,7 +279,7 @@
             </div>
 
             <button
-              @click="handleGameStart"
+              @click="handleStartGame"
               :disabled="players.length < 2"
               class="w-full py-4 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105"
             >
@@ -293,7 +310,6 @@
             </div>
           </template>
 
-          <!-- GUEST: Room Info & Waiting -->
           <template v-else>
             <div
               class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
@@ -338,7 +354,6 @@
             </div>
           </template>
 
-          <!-- Leave Room Button - SAMA UNTUK SEMUA -->
           <button
             @click="handleLeaveRoom"
             class="w-full py-3 bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
@@ -366,7 +381,6 @@ const gameSettings = ref({
   timeLimit: "2",
 });
 
-// Initialize Janus
 const JANUS_SERVER =
   import.meta.env.VITE_JANUS_SERVER || "https://janus.cloudwego.net/janus";
 const {
@@ -441,7 +455,6 @@ onMounted(async () => {
     setTimeout(() => router.push("/"), 3000);
   }
 
-  // ✅ ADD: Setup router guard untuk debugging
   unregisterGuard = router.beforeEach((to, from, next) => {
     if (to.path === '/game') {
       const gameStarted = localStorage.getItem('gameStarted');
@@ -458,61 +471,79 @@ onMounted(async () => {
   });
 });
 
-// ✅ CRITICAL FIX: Watch messages dengan deep watch
+// ✅ ENHANCED WATCH with detailed logging
 watch(messages, (newMessages) => {
+  console.log("[Lobby] ==========================================");
+  console.log("[Lobby] 📬 Messages array updated!");
+  console.log("[Lobby] Total messages:", newMessages.length);
+  console.log("[Lobby] isRedirecting:", isRedirecting.value);
+  console.log("[Lobby] isHost:", isHost.value);
+  
   if (isRedirecting.value) {
-    console.log("[Lobby] Already redirecting, skip");
+    console.log("[Lobby] ⚠️ Already redirecting, SKIP");
     return;
   }
 
-  console.log("[Lobby] 📬 Messages updated, total:", newMessages.length);
-  
-  // Check last message only
-  if (newMessages.length === 0) return;
+  if (newMessages.length === 0) {
+    console.log("[Lobby] ⚠️ No messages, SKIP");
+    return;
+  }
   
   const lastMsg = newMessages[newMessages.length - 1];
+  console.log("[Lobby] 🔍 Last message:", JSON.stringify(lastMsg, null, 2));
 
-  // ✅ METHOD 1: Direct game_event type (from onGameStart callback)
+  // ✅ METHOD 1: Direct game_event type
   if (lastMsg?.type === "game_event") {
+    console.log("[Lobby] ✅ METHOD 1: Direct game_event detected!");
     const data = lastMsg.data || {};
-    console.log("[Lobby] ✅ Direct game_event detected:", data);
+    console.log("[Lobby] Event data:", data);
     
     if (data.event === "start_game") {
-      handleGameStart(data);
+      console.log("[Lobby] 🎮 START GAME EVENT CONFIRMED!");
+      handleRedirect(data);
       return;
+    } else {
+      console.log("[Lobby] ⚠️ game_event but not start_game, event:", data.event);
     }
   }
 
-  // ✅ METHOD 2: Parse chat message (fallback)
+  // ✅ METHOD 2: Parse nested JSON in chat message
   if (lastMsg?.type === "chat" && lastMsg?.message) {
+    console.log("[Lobby] 🔍 METHOD 2: Trying to parse chat message...");
     try {
       const parsed = JSON.parse(lastMsg.message);
-      console.log("[Lobby] 📦 Parsed message:", {
-        type: parsed.type,
-        event: parsed.event
-      });
+      console.log("[Lobby] 📦 Parsed nested content:", JSON.stringify(parsed, null, 2));
       
       if (parsed.type === "game_event" && parsed.event === "start_game") {
-        console.log("[Lobby] ✅ Game start detected from chat message!");
-        handleGameStart(parsed.data || {});
+        console.log("[Lobby] ✅ START GAME found in nested JSON!");
+        handleRedirect(parsed.data || {});
         return;
+      } else {
+        console.log("[Lobby] ℹ️ Parsed but not start_game:", {
+          type: parsed.type,
+          event: parsed.event
+        });
       }
     } catch (e) {
-      // Not JSON, ignore
+      console.log("[Lobby] ℹ️ Not JSON or parse failed");
     }
   }
-}, { deep: true }); // ✅ Add deep watch
+  
+  console.log("[Lobby] ⚠️ No start_game event detected in this message");
+  console.log("[Lobby] ==========================================");
+}, { deep: true });
 
-function handleGameStart(data: any) {
+function handleRedirect(data: any) {
+  console.log("[Lobby] 🚀 handleRedirect called with data:", data);
+  
   if (isRedirecting.value) {
-    console.log("[Lobby] Already redirecting, abort");
+    console.log("[Lobby] ❌ Already redirecting, abort");
     return;
   }
 
-  console.log("[Lobby] 🎮 Processing game start event with data:", data);
   isRedirecting.value = true;
+  console.log("[Lobby] ✅ Set isRedirecting = true");
 
-  // ✅ Set localStorage FIRST
   const settings = {
     mode: data.mode || gameSettings.value.mode || "bahasa",
     timeLimit: data.timeLimit || gameSettings.value.timeLimit || "2"
@@ -522,22 +553,19 @@ function handleGameStart(data: any) {
   localStorage.setItem("gameStarted", "true");
   localStorage.setItem("gameSettings", JSON.stringify(settings));
   
-  // Verify
   const saved = localStorage.getItem("gameStarted");
   console.log("[Lobby] ✅ Verified localStorage.gameStarted =", saved);
   
-  // Clear interval
   if (syncInterval) {
     clearInterval(syncInterval);
     console.log("[Lobby] 🧹 Cleared sync interval");
   }
   
-  // Redirect
-  console.log("[Lobby] 🚀 Attempting redirect to /game...");
+  console.log("[Lobby] 🚀 Calling router.push('/game')...");
   router.push("/game").then(() => {
-    console.log("[Lobby] ✅ Router.push successful");
+    console.log("[Lobby] ✅ Router.push SUCCESS");
   }).catch(err => {
-    console.error("[Lobby] ❌ Router.push failed:", err);
+    console.error("[Lobby] ❌ Router.push FAILED:", err);
     isRedirecting.value = false;
     localStorage.removeItem("gameStarted");
     localStorage.removeItem("gameSettings");
@@ -547,7 +575,7 @@ function handleGameStart(data: any) {
 onUnmounted(() => {
   if (syncInterval) clearInterval(syncInterval);
   if (unregisterGuard) unregisterGuard();
-  console.log("[Lobby] Component unmounted, keeping room alive");
+  console.log("[Lobby] Component unmounted");
 });
 
 const copyRoomCode = () => {
@@ -571,7 +599,10 @@ const decreaseMaxPlayers = () => {
 };
 
 const handleStartGame = () => {
-  console.log("[Lobby] Host starting game with settings:", gameSettings.value);
+  console.log("[Lobby] ==========================================");
+  console.log("[Lobby] 🎮 HOST CLICKED START GAME");
+  console.log("[Lobby] Settings:", gameSettings.value);
+  console.log("[Lobby] ==========================================");
 
   const success = startGame({
     ...gameSettings.value,
@@ -580,19 +611,17 @@ const handleStartGame = () => {
   });
 
   if (success) {
-    console.log("[Lobby] ✅ Game start broadcast successful");
+    console.log("[Lobby] ✅ startGame() returned true");
     
-    // Set localStorage for host
     localStorage.setItem('gameStarted', 'true');
     localStorage.setItem('gameSettings', JSON.stringify(gameSettings.value));
     
-    // Clear interval
     if (syncInterval) clearInterval(syncInterval);
     
-    // Redirect host
+    console.log("[Lobby] 🚀 HOST redirecting to /game...");
     router.push('/game');
   } else {
-    console.error("[Lobby] ❌ Failed to start game");
+    console.error("[Lobby] ❌ startGame() returned false");
     error.value = "Failed to start game";
   }
 };
