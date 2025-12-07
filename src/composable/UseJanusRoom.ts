@@ -75,16 +75,50 @@ export function useJanusRoom(
     players.value = players.value.filter((p) => p.username !== playerUsername);
   });
 
+  // ✅ CRITICAL FIX: Handle BOTH onMessage AND onGameStart
   janusService.onMessage((msg: GameMessage) => {
     console.log("[useJanusRoom] Message received:", msg);
+    
+    // ✅ Parse nested JSON in message field
+    if (msg.type === "chat" && msg.message) {
+      try {
+        const parsed = JSON.parse(msg.message);
+        console.log("[useJanusRoom] Parsed nested message:", parsed);
+        
+        // ✅ Check if it's actually a game_event
+        if (parsed.type === "game_event" && parsed.event === "start_game") {
+          console.log("[useJanusRoom] 🎮 GAME START detected in chat message!");
+          
+          // Convert to proper game_event and push to messages
+          const gameEventMessage: GameMessage = {
+            type: "game_event",
+            room_code: roomCode.value,
+            sender: msg.sender,
+            message: "Game started",
+            timestamp: msg.timestamp,
+            data: {
+              event: "start_game",
+              ...parsed.data
+            }
+          };
+          
+          messages.value.push(gameEventMessage);
+          console.log("[useJanusRoom] ✅ Pushed game_event to messages");
+          return; // Don't push the original chat message
+        }
+      } catch (e) {
+        // Not JSON, treat as regular message
+      }
+    }
+    
+    // Push regular messages
     messages.value.push(msg);
   });
 
-  // ✅ CRITICAL FIX: Push game_event ke messages array
+  // ✅ Keep onGameStart for direct game_event type
   janusService.onGameStart((data: any) => {
-    console.log("[useJanusRoom] Game started:", data);
+    console.log("[useJanusRoom] Game started (direct):", data);
     
-    // ✅ MANUAL PUSH ke messages array
     const gameEventMessage: GameMessage = {
       type: "game_event",
       room_code: roomCode.value,
@@ -98,7 +132,7 @@ export function useJanusRoom(
     };
     
     messages.value.push(gameEventMessage);
-    console.log("[useJanusRoom] ✅ Pushed game_event to messages array");
+    console.log("[useJanusRoom] ✅ Pushed game_event to messages (direct)");
   });
 
   janusService.onStatus((statusMsg: string) => {
