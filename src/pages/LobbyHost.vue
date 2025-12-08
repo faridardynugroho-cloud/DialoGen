@@ -190,6 +190,8 @@ onMounted(() => {
       players.value.push({ name: 'Joko', isHost: false })
     }
   }, 9000)
+
+
 })
 
 const copyRoomCode = () => {
@@ -213,10 +215,10 @@ const decreaseMaxPlayers = () => {
 }
 
 const startGame = () => {
-  // Store game settings in localStorage
   localStorage.setItem('gameStarted', 'true')
-  router.push('/game')
+  router.push('/game-room')
 }
+
 
 const leaveRoom = () => {
   // Clear localStorage and navigate back

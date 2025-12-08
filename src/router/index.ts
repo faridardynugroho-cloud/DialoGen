@@ -5,6 +5,8 @@ import CreateRoom from '../pages/CreateRoom.vue'
 import JoinRoom from '../pages/JoinName.vue'
 import LobbyHost from '../pages/LobbyHost.vue'
 import LobbyGuest from '../pages/LobbyGuest.vue'
+import GameRoom from '../pages/GameRoom.vue'
+import LeaderBoard from '@/pages/LeaderBoard.vue'
 
 const routes = [
   {
@@ -31,6 +33,16 @@ const routes = [
     path: '/lobby-guest',
     name: 'lobby-guest',
     component: LobbyGuest,
+  },
+  {
+    path: '/game-room',
+    name: 'game-room',
+    component: GameRoom,
+  },
+  {
+    path: '/leader-board',
+    name: 'leader-board',
+    component: LeaderBoard,
   },
 ]
 

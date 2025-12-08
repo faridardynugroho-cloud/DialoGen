@@ -147,7 +147,14 @@ onMounted(() => {
       players.value.push({ name: 'Joko', isHost: false })
     }
   }, 9000)
+
+  setInterval(() => {
+    if (localStorage.getItem('gameStarted') === 'true') {
+      router.push('/game')
+    }
+  }, 1000)
 })
+
 
 const leaveRoom = () => {
   // Clear localStorage and navigate back
