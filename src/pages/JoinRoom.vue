@@ -7,6 +7,19 @@
       <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
     </div>
 
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
+        <p class="text-white text-lg">{{ status || 'Joining room...' }}</p>
+      </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div v-if="error" class="fixed top-5 right-5 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in-right">
+      {{ error }}
+    </div>
+
     <!-- Main Card -->
     <div class="w-full max-w-md bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl p-8 border border-white border-opacity-20 shadow-2xl z-10 animate-slide-up">
       <!-- Room Info -->
@@ -53,7 +66,8 @@
           <input 
             v-model="username" 
             @keyup.enter="goLobby"
-            class="w-full border-2 border-white border-opacity-30 bg-white bg-opacity-10 rounded-xl px-4 py-4 pl-12 text-white placeholder-gray-300 focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50 focus:outline-none focus:border-opacity-60 transition-all duration-300" 
+            :disabled="isLoading"
+            class="w-full border-2 border-white border-opacity-30 bg-white bg-opacity-10 rounded-xl px-4 py-4 pl-12 text-white placeholder-gray-300 focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50 focus:outline-none focus:border-opacity-60 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed" 
             placeholder="Username" 
           />
           <div class="absolute inset-y-0 left-0 flex items-center pl-4">
@@ -76,7 +90,7 @@
       <!-- Join Button -->
       <button 
         @click="goLobby" 
-        :disabled="!username.trim()"
+        :disabled="!username.trim() || isLoading"
         class="w-full py-4 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-300 focus:ring-opacity-50 relative overflow-hidden group"
       >
         <span class="relative z-10 flex items-center justify-center">
@@ -104,41 +118,74 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useJanusRoom } from '../composable/UseJanusRoom'
 
 const router = useRouter()
 const username = ref('')
 const room = ref('')
 
+// Initialize Janus composable
+const { 
+  init, 
+  joinRoom, 
+  isLoading, 
+  error, 
+  status 
+} = useJanusRoom()
+
 // Get room code from URL parameters when component mounts
-onMounted(() => {
+onMounted(async () => {
   const roomCode = new URLSearchParams(window.location.search).get('code')
   if (roomCode) {
     room.value = roomCode
+  } else {
+    error.value = 'Kode room tidak ditemukan'
+    setTimeout(() => {
+      router.push('/')
+    }, 2000)
+    return
+  }
+
+  // Initialize Janus
+  try {
+    await init()
+    console.log('Janus initialized successfully')
+  } catch (err) {
+    console.error('Failed to initialize Janus:', err)
   }
 })
 
-const goLobby = () => {
-  if (!username.value.trim()) {
-    // Create a toast notification instead of alert
-    const toast = document.createElement('div')
-    toast.className = 'fixed top-5 right-5 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in-right'
-    toast.textContent = 'Username tidak boleh kosong!'
-    document.body.appendChild(toast)
-    
+// Watch for errors and show toast
+watch(error, (newError) => {
+  if (newError) {
     setTimeout(() => {
-      toast.classList.add('animate-fade-out')
-      setTimeout(() => document.body.removeChild(toast), 500)
-    }, 3000)
+      error.value = null
+    }, 5000)
+  }
+})
+
+const goLobby = async () => {
+  if (!username.value.trim()) {
+    error.value = 'Username tidak boleh kosong!'
     return
   }
   
-  // Store data in localStorage for use in other parts of app
-  localStorage.setItem('username', username.value)
-  localStorage.setItem('roomCode', room.value)
-  
-  router.push('/lobby-guest')
+  try {
+    // Join room with Janus
+    await joinRoom(room.value, username.value)
+    
+    // Store data and navigate to lobby
+    localStorage.setItem('username', username.value)
+    localStorage.setItem('roomCode', room.value)
+    localStorage.setItem('isHost', 'false')
+    
+    router.push('/lobby')
+  } catch (err) {
+    console.error('Failed to join room:', err)
+    error.value = err.message || 'Gagal bergabung ke room'
+  }
 }
 
 const goBack = () => {

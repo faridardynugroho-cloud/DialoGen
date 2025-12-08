@@ -4,6 +4,19 @@
     <!-- Animated Background Elements -->
    
 
+    <!-- Loading Overlay -->
+    <div v-if="isLoading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
+        <p class="text-white text-lg">{{ status || 'Connecting to Server...' }}</p>
+      </div>
+    </div>
+
+    <!-- Error Toast -->
+    <div v-if="error" class="fixed top-5 right-5 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-slide-in-right">
+      {{ error }}
+    </div>
+
     <!-- Logo / Title -->
     <div class="text-center mb-8 z-10 animate-fade-in">
       
@@ -20,7 +33,8 @@
         <div class="text-center group">
           <button
             @click="goCreate"
-            class="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50 relative overflow-hidden"
+            :disabled="isLoading"
+            class="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50 relative overflow-hidden"
           >
             <span class="relative z-10 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -46,7 +60,8 @@
         <div class="text-center group">
           <button
             @click="toggleJoin"
-            class="w-full py-4 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-300 focus:ring-opacity-50 relative overflow-hidden"
+            :disabled="isLoading"
+            class="w-full py-4 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-green-300 focus:ring-opacity-50 relative overflow-hidden"
           >
             <span class="relative z-10 flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -64,8 +79,9 @@
                 <input
                   v-model="roomCode"
                   @keyup.enter="goJoin"
+                  :disabled="isLoading"
                   placeholder="Masukkan kode room..."
-                  class="w-full border-2 border-white border-opacity-30 bg-white bg-opacity-10 rounded-xl px-4 py-3 text-white placeholder-gray-300 focus:ring-4 focus:ring-green-300 focus:ring-opacity-50 focus:outline-none transition-all duration-300"
+                  class="w-full border-2 border-white border-opacity-30 bg-white bg-opacity-10 rounded-xl px-4 py-3 text-white placeholder-gray-300 focus:ring-4 focus:ring-green-300 focus:ring-opacity-50 focus:outline-none transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                 />
                 <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,7 +91,8 @@
               </div>
               <button
                 @click="goJoin"
-                class="w-full mt-4 py-3 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 text-white rounded-xl font-bold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 focus:ring-opacity-50"
+                :disabled="isLoading"
+                class="w-full mt-4 py-3 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-xl font-bold transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-green-300 focus:ring-opacity-50"
               >
                 Join Now
               </button>
@@ -97,19 +114,53 @@
 </template>
 
 <script setup>
-import { ref } from "vue"
+import { ref, onMounted, watch } from "vue"
 import { useRouter } from "vue-router"
+import { useJanusRoom } from '../composable/UseJanusRoom'
 
 const router = useRouter()
 const showJoin = ref(false)
 const roomCode = ref("")
 
-const goCreate = () => router.push("/create-room")
+// Initialize Janus composable
+const { init, isLoading, error, status } = useJanusRoom()
+
+// Initialize Janus on component mount
+onMounted(async () => {
+  try {
+    await init()
+    console.log('Janus initialized successfully')
+  } catch (err) {
+    console.error('Failed to initialize Janus:', err)
+  }
+})
+
+// Watch for errors and show toast
+watch(error, (newError) => {
+  if (newError) {
+    setTimeout(() => {
+      error.value = null
+    }, 5000)
+  }
+})
+
+const goCreate = () => {
+  if (isLoading.value) return
+  router.push("/create-room")
+}
+
 const toggleJoin = () => {
+  if (isLoading.value) return
   showJoin.value = !showJoin.value
 }
+
 const goJoin = () => {
-  if (!roomCode.value.trim()) return
+  if (!roomCode.value.trim()) {
+    error.value = 'Kode room tidak boleh kosong!'
+    return
+  }
+  
+  if (isLoading.value) return
   
   router.push(`/join-room?code=${roomCode.value}`)
 }
@@ -175,6 +226,17 @@ const goJoin = () => {
   }
 }
 
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
 .animate-blob {
   animation: blob 7s infinite;
 }
@@ -202,6 +264,10 @@ const goJoin = () => {
 
 .animate-slide-up {
   animation: slide-up 0.8s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.5s ease-out;
 }
 
 .slide-down-enter-active {
