@@ -613,8 +613,12 @@ const handleStartGame = () => {
   if (success) {
     console.log("[Lobby] ✅ startGame() returned true");
     
+    // ✅ CRITICAL FIX: Set isHost SEBELUM redirect
+    localStorage.setItem('isHost', 'true');  // ✅✅✅ TAMBAHKAN INI!
     localStorage.setItem('gameStarted', 'true');
     localStorage.setItem('gameSettings', JSON.stringify(gameSettings.value));
+    
+    console.log("[Lobby] ✅ Set localStorage.isHost = true");
     
     if (syncInterval) clearInterval(syncInterval);
     
