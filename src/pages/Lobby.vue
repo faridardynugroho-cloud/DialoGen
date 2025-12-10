@@ -1,6 +1,7 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-b from-red-600 to-white p-0 md:p-6"
+   class="min-h-screen p-0 md:p-6"
+  style="background: linear-gradient(to bottom, #dc2626 2%, #dc2626 2%, #ffffff 20%, #ffffff 100%);"
   >
     <!-- Loading Overlay -->
     <div
@@ -84,9 +85,9 @@
             </svg>
           </button>
         </div>
-        <div v-if="showCopyNotification" class="mt-2 text-green-400 text-sm">
+        <!-- <div v-if="showCopyNotification" class="mt-2 text-green-400 text-sm">
           Room code copied!
-        </div>
+        </div> -->
       </div>
 
       <div class="grid md:grid-cols-3 gap-0 md:gap-6">
@@ -914,6 +915,7 @@ select::-webkit-scrollbar-thumb:hover {
 
 .dropdown-kategori{
   background-color: #201658;
+  color: white;
 }
 
 .button-start{
