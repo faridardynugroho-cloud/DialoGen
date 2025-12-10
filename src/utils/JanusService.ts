@@ -18,12 +18,19 @@ export interface GameMessage {
   data?: any;
 }
 
+export interface SettingsUpdate {
+  mode: string;
+  timeLimit: string;
+  maxPlayers?: number;
+}
+
 export type OnPlayerJoinCallback = (player: Player) => void;
 export type OnPlayerLeaveCallback = (username: string) => void;
 export type OnMessageCallback = (msg: GameMessage) => void;
 export type OnGameStartCallback = (data: any) => void;
 export type OnStatusCallback = (status: string) => void;
 export type OnHostDisconnectCallback = () => void;
+export type OnSettingsUpdateCallback = (settings: SettingsUpdate) => void;
 
 export class JanusDialogenService {
   private janus: any = null;
@@ -38,8 +45,7 @@ export class JanusDialogenService {
   private isHost: boolean = false;
   private players: Map<string, Player> = new Map();
 
-    private processedMessageIds = new Set<string>();
-  
+  private processedMessageIds = new Set<string>();
 
   // Callbacks
   private _onPlayerJoinCallbacks: OnPlayerJoinCallback[] = [];
@@ -48,6 +54,7 @@ export class JanusDialogenService {
   private _onGameStartCallbacks: OnGameStartCallback[] = [];
   private _onStatusCallbacks: OnStatusCallback[] = [];
   private _onHostDisconnectCallbacks: OnHostDisconnectCallback[] = [];
+  private _onSettingsUpdateCallbacks: OnSettingsUpdateCallback[] = [];
 
   constructor(serverUrl: string) {
     this.server = serverUrl;
@@ -91,6 +98,12 @@ export class JanusDialogenService {
     }
   }
 
+  onSettingsUpdate(cb: OnSettingsUpdateCallback) {
+    if (!this._onSettingsUpdateCallbacks.includes(cb)) {
+      this._onSettingsUpdateCallbacks.push(cb);
+    }
+  }
+
   private _triggerPlayerJoin(player: Player) {
     this._onPlayerJoinCallbacks.forEach((cb) => cb(player));
   }
@@ -113,6 +126,10 @@ export class JanusDialogenService {
 
   private _triggerHostDisconnect() {
     this._onHostDisconnectCallbacks.forEach((cb) => cb());
+  }
+
+  private _triggerSettingsUpdate(settings: SettingsUpdate) {
+    this._onSettingsUpdateCallbacks.forEach((cb) => cb(settings));
   }
 
   // ==================== INITIALIZATION ====================
@@ -463,133 +480,199 @@ export class JanusDialogenService {
     return match && match[1] ? match[1] : username;
   }
 
-private _handleDataMessage(
-  raw: string,
-  handle: any,
-  resolve?: any,
-  reject?: any
-) {
-  try {
-    const data = JSON.parse(raw);
-    
-    // ✅ CRITICAL FIX 1: Generate unique message ID
-    const msgId = `${data.textroom || 'unknown'}_${data.transaction || Date.now()}_${data.room || ''}_${data.username || ''}`;
-    
-    // ✅ CRITICAL FIX 2: Check duplicate FIRST
-    if (this.processedMessageIds.has(msgId)) {
-      console.log(`[JanusDialogen] 🚫 Skipping duplicate: ${msgId.substring(0, 50)}...`);
-      return;
-    }
-    
-    // ✅ CRITICAL FIX 3: Mark as processed IMMEDIATELY
-    this.processedMessageIds.add(msgId);
-    
-    console.log("[JanusDialogen] 📨 Processing:", data.textroom, {
-      transaction: data.transaction,
-      from: data.username,
-      msgId: msgId.substring(0, 50)
-    });
+  private _handleDataMessage(
+    raw: string,
+    handle: any,
+    resolve?: any,
+    reject?: any
+  ) {
+    try {
+      const data = JSON.parse(raw);
 
-    const meta = handle._meta;
+      // ✅ Generate unique ID SEBELUM processing apapun
+      const msgId = `${data.textroom || "unknown"}_${
+        data.transaction || Date.now()
+      }_${data.room || ""}_${data.username || ""}`;
 
-    // ✅ Handle participants list (tanpa textroom field)
-    if (data.participants && Array.isArray(data.participants) && !data.textroom) {
-      const sortedParticipants = [...data.participants].sort((a, b) => {
-        const getTimestamp = (username: string) => {
-          const match = username.match(/_(\d+)$/);
-          return match && match[1] ? parseInt(match[1]) : 0;
-        };
-        return getTimestamp(a.username) - getTimestamp(b.username);
-      });
+      // ✅ Check duplicate IMMEDIATELY
+      if (this.processedMessageIds.has(msgId)) {
+        console.log(
+          `[JanusDialogen] 🚫 SKIP DUPLICATE: ${data.textroom} from ${
+            data.username || "system"
+          }`
+        );
+        return; // STOP processing sekarang juga
+      }
 
-      sortedParticipants.forEach((p: any, index: number) => {
-        const displayName = this._extractDisplayName(p.username, p.display);
-        if (displayName === meta.username) {
+      // ✅ Mark as processed
+      this.processedMessageIds.add(msgId);
+
+      // ✅ Clean old entries (keep last 100)
+      if (this.processedMessageIds.size > 100) {
+        const firstKey = this.processedMessageIds.values().next().value;
+        if (firstKey) this.processedMessageIds.delete(firstKey);
+      }
+
+      console.log(
+        `[JanusDialogen] ✅ PROCESSING: ${data.textroom} from ${
+          data.username || "system"
+        }`
+      );
+
+      const meta = handle._meta;
+
+      // ✅ FIX: Handle participants list dengan flag untuk prevent duplicate
+      if (
+        data.participants &&
+        Array.isArray(data.participants) &&
+        !data.textroom
+      ) {
+        console.log("[JanusDialogen] 📋 Processing participants list...");
+
+        // ✅ TAMBAHKAN: Check apakah ini sudah di-process
+        if (meta.participantsProcessed) {
+          console.log(
+            "[JanusDialogen] ⏭️ Participants already processed, skipping"
+          );
           return;
         }
 
-        const isParticipantHost = index === 0;
-        const player: Player = {
-          username: displayName,
-          isHost: isParticipantHost,
-          joined_at: new Date().toISOString(),
-        };
+        meta.participantsProcessed = true; // Mark sebagai processed
 
-        if (!this.players.has(displayName)) {
+        const sortedParticipants = [...data.participants].sort((a, b) => {
+          const getTimestamp = (username: string) => {
+            const match = username.match(/_(\d+)$/);
+            return match && match[1] ? parseInt(match[1]) : 0;
+          };
+          return getTimestamp(a.username) - getTimestamp(b.username);
+        });
+
+        sortedParticipants.forEach((p: any, index: number) => {
+          const displayName = this._extractDisplayName(p.username, p.display);
+
+          // Skip self
+          if (displayName === meta.username) {
+            console.log(
+              `[JanusDialogen] ⏭️ Skip self in participants: ${displayName}`
+            );
+            return;
+          }
+
+          // ✅ Check apakah player sudah ada
+          if (this.players.has(displayName)) {
+            console.log(
+              `[JanusDialogen] ⏭️ Player already exists: ${displayName}`
+            );
+            return;
+          }
+
+          const isParticipantHost = index === 0;
+          const player: Player = {
+            username: displayName,
+            isHost: isParticipantHost,
+            joined_at: new Date().toISOString(),
+          };
+
           this.players.set(displayName, player);
           this._triggerPlayerJoin(player);
-        }
-      });
-      return;
-    }
-
-    // ✅ Handle success response dari room creation
-    if (data.textroom === "success" && data.room && !meta.roomCreated) {
-      meta.roomCreated = true;
-      console.log("[JanusDialogen] ✅ Room created, joining...");
-      this._triggerStatus("Room created, joining...");
-
-      handle.data({
-        text: JSON.stringify({
-          textroom: "join",
-          room: data.room,
-          username: `${meta.username}_${Date.now()}`,
-          display: meta.username,
-          transaction: Janus.randomString(12),
-        }),
-      });
-      return;
-    }
-
-    // ✅ Handle success dari join (dengan participants)
-    if (data.textroom === "success" && data.participants !== undefined && !meta.joined) {
-      meta.joined = true;
-      console.log("[JanusDialogen] ✅ Joined room via success event");
-
-      const selfPlayer: Player = {
-        username: meta.username,
-        isHost: meta.isHost,
-        joined_at: new Date().toISOString(),
-      };
-      this.players.set(meta.username, selfPlayer);
-      this._triggerPlayerJoin(selfPlayer);
-      this._triggerStatus(`Joined room ${meta.roomCode}`);
-
-      if (resolve) {
-        resolve();
-      }
-      return;
-    }
-
-    // ✅ Handle joined event (fallback)
-    if (data.textroom === "joined" && !meta.joined) {
-      meta.joined = true;
-      console.log("[JanusDialogen] ✅ Joined via joined event");
-
-      const selfPlayer: Player = {
-        username: meta.username,
-        isHost: meta.isHost,
-        joined_at: new Date().toISOString(),
-      };
-      this.players.set(meta.username, selfPlayer);
-      this._triggerStatus(`Joined room ${meta.roomCode}`);
-
-      if (resolve) {
-        resolve();
-      }
-      return;
-    }
-
-    // ✅ Handle other participants joining
-    if (data.textroom === "join") {
-      const displayName = this._extractDisplayName(data.username, data.display);
-
-      if (displayName === meta.username) {
-        console.log("[JanusDialogen] Skipping self-join");
+          console.log(
+            `[JanusDialogen] ➕ Added from participants: ${displayName}`
+          );
+        });
         return;
       }
 
-      if (displayName) {
+      // ✅ Handle success response dari room creation
+      if (data.textroom === "success" && data.room && !meta.roomCreated) {
+        meta.roomCreated = true;
+        console.log("[JanusDialogen] ✅ Room created, joining...");
+        this._triggerStatus("Room created, joining...");
+
+        handle.data({
+          text: JSON.stringify({
+            textroom: "join",
+            room: data.room,
+            username: `${meta.username}_${Date.now()}`,
+            display: meta.username,
+            transaction: Janus.randomString(12),
+          }),
+        });
+        return;
+      }
+
+      // ✅ Handle success dari join (dengan participants)
+      if (
+        data.textroom === "success" &&
+        data.participants !== undefined &&
+        !meta.joined
+      ) {
+        meta.joined = true;
+        console.log("[JanusDialogen] ✅ Joined room via success event");
+
+        // ✅ HANYA add self player SEKALI
+        if (!this.players.has(meta.username)) {
+          const selfPlayer: Player = {
+            username: meta.username,
+            isHost: meta.isHost,
+            joined_at: new Date().toISOString(),
+          };
+          this.players.set(meta.username, selfPlayer);
+          this._triggerPlayerJoin(selfPlayer);
+          console.log(`[JanusDialogen] ➕ Added self: ${meta.username}`);
+        } else {
+          console.log(
+            `[JanusDialogen] ⏭️ Self already exists: ${meta.username}`
+          );
+        }
+
+        this._triggerStatus(`Joined room ${meta.roomCode}`);
+
+        if (resolve) resolve();
+        return;
+      }
+
+      // ✅ Handle joined event (fallback)
+      if (data.textroom === "joined" && !meta.joined) {
+        meta.joined = true;
+        console.log("[JanusDialogen] ✅ Joined via joined event");
+
+        if (!this.players.has(meta.username)) {
+          const selfPlayer: Player = {
+            username: meta.username,
+            isHost: meta.isHost,
+            joined_at: new Date().toISOString(),
+          };
+          this.players.set(meta.username, selfPlayer);
+          this._triggerStatus(`Joined room ${meta.roomCode}`);
+          console.log(
+            `[JanusDialogen] ➕ Added self (joined event): ${meta.username}`
+          );
+        }
+
+        if (resolve) resolve();
+        return;
+      }
+
+      // ✅ Handle other participants joining
+      if (data.textroom === "join") {
+        const displayName = this._extractDisplayName(
+          data.username,
+          data.display
+        );
+
+        if (displayName === meta.username) {
+          console.log("[JanusDialogen] ⏭️ Skipping self-join");
+          return;
+        }
+
+        // ✅ Check duplicate sebelum add
+        if (this.players.has(displayName)) {
+          console.log(
+            `[JanusDialogen] ⏭️ Player already exists: ${displayName}`
+          );
+          return;
+        }
+
         const player: Player = {
           username: displayName,
           isHost: false,
@@ -597,73 +680,103 @@ private _handleDataMessage(
         };
         this.players.set(displayName, player);
         this._triggerPlayerJoin(player);
-        console.log(`[JanusDialogen] 👤 ${displayName} joined`);
+        console.log(`[JanusDialogen] ➕ ${displayName} joined`);
+        return;
       }
-      return;
-    }
 
-    // ✅ Handle player leaving
-    if (data.textroom === "leave") {
-      const displayName = this._extractDisplayName(data.username, data.display);
+      // ✅ Handle player leaving
+      if (data.textroom === "leave") {
+        const displayName = this._extractDisplayName(
+          data.username,
+          data.display
+        );
 
-      if (displayName) {
-        const leftPlayer = this.players.get(displayName);
-        const wasHost = leftPlayer?.isHost || false;
+        if (displayName) {
+          const leftPlayer = this.players.get(displayName);
+          const wasHost = leftPlayer?.isHost || false;
 
-        this.players.delete(displayName);
-        this._triggerPlayerLeave(displayName);
+          this.players.delete(displayName);
+          this._triggerPlayerLeave(displayName);
 
-        if (wasHost && !this.isHost) {
-          console.log("[JanusDialogen] ⚠️ Host disconnected");
-          this._triggerHostDisconnect();
+          if (wasHost && !this.isHost) {
+            console.log("[JanusDialogen] ⚠️ Host disconnected");
+            this._triggerHostDisconnect();
+          }
         }
+        return;
       }
-      return;
+
+      // ✅ Handle chat message - ONLY trigger for game messages
+      if (data.textroom === "message") {
+        let payload: any;
+        try {
+          payload =
+            typeof data.text === "string" ? JSON.parse(data.text) : data.text;
+        } catch {
+          payload = { message: data.text };
+        }
+
+        // ✅ Extract display name from sender
+        const senderName = this._extractDisplayName(
+          data.username || payload.sender,
+          data.display
+        );
+
+        if (payload.type === "settings_update") {
+          console.log(
+            "[JanusDialogen] Received settings update:",
+            payload.data
+          );
+
+          // ✅ SKIP untuk sender sendiri (host tidak perlu update dari broadcast sendiri)
+          const senderName = this._extractDisplayName(
+            data.username || payload.sender,
+            data.display
+          );
+
+          if (senderName === meta.username) {
+            console.log("[JanusDialogen] ⏭️ Skip settings update from self");
+            return;
+          }
+
+          this._triggerSettingsUpdate(payload.data);
+          return;
+        }
+
+        const gameMessage: GameMessage = {
+          type: payload.type || "chat",
+          room_code: this.currentRoomCode,
+          sender: senderName,
+          message: payload.message || payload.msg || "",
+          timestamp: payload.timestamp || new Date().toISOString(),
+          data: payload.data,
+        };
+
+        // ✅ Route to appropriate callback
+        if (
+          gameMessage.type === "game_event" &&
+          payload.event === "start_game"
+        ) {
+          this._triggerGameStart(payload.data);
+        } else {
+          this._triggerMessage(gameMessage);
+        }
+        return;
+      }
+
+      // ✅ Handle errors
+      if (data.textroom === "error") {
+        console.error("[JanusDialogen] ❌ Error:", data.error);
+        this._triggerStatus(`Error: ${data.error}`);
+        if (reject && data.error_code !== 426) {
+          reject(new Error(data.error));
+        }
+        return;
+      }
+    } catch (err) {
+      console.error("[JanusDialogen] Parse error:", err);
     }
-
-    // ✅ Handle chat message - ONLY trigger for game messages
-    if (data.textroom === "message") {
-      let payload: any;
-      try {
-        payload = typeof data.text === "string" ? JSON.parse(data.text) : data.text;
-      } catch {
-        payload = { message: data.text };
-      }
-
-      // ✅ Extract display name from sender
-      const senderName = this._extractDisplayName(data.username || payload.sender, data.display);
-
-      const gameMessage: GameMessage = {
-        type: payload.type || "chat",
-        room_code: this.currentRoomCode,
-        sender: senderName,
-        message: payload.message || payload.msg || "",
-        timestamp: payload.timestamp || new Date().toISOString(),
-        data: payload.data,
-      };
-
-      // ✅ Route to appropriate callback
-      if (gameMessage.type === "game_event" && payload.event === "start_game") {
-        this._triggerGameStart(payload.data);
-      } else {
-        this._triggerMessage(gameMessage);
-      }
-      return;
-    }
-
-    // ✅ Handle errors
-    if (data.textroom === "error") {
-      console.error("[JanusDialogen] ❌ Error:", data.error);
-      this._triggerStatus(`Error: ${data.error}`);
-      if (reject && data.error_code !== 426) {
-        reject(new Error(data.error));
-      }
-      return;
-    }
-  } catch (err) {
-    console.error("[JanusDialogen] Parse error:", err);
   }
-}
 
   // ==================== SEND MESSAGES ====================
 
@@ -724,6 +837,38 @@ private _handleDataMessage(
     return true;
   }
 
+  broadcastSettingsUpdate(settings: SettingsUpdate) {
+    if (!this.isHost) {
+      console.warn("[JanusDialogen] Only host can update settings");
+      return false;
+    }
+
+    if (!this.roomPlugin || !this.roomPlugin._meta?.joined) {
+      console.warn("[JanusDialogen] Not joined yet");
+      return false;
+    }
+
+    const payload = {
+      type: "settings_update",
+      sender: this.currentUsername,
+      timestamp: new Date().toISOString(),
+      data: settings,
+    };
+
+    console.log("[JanusDialogen] Broadcasting settings update:", settings);
+
+    this.roomPlugin.data({
+      text: JSON.stringify({
+        textroom: "message",
+        room: this.roomPlugin._meta.roomId,
+        text: JSON.stringify(payload),
+        transaction: Janus.randomString(12),
+      }),
+    });
+
+    return true;
+  }
+
   // ==================== UTILITIES ====================
 
   private _generateRoomId(roomCode: string): number {
@@ -754,7 +899,7 @@ private _handleDataMessage(
 
   // ==================== CLEANUP ====================
 
-async leaveRoom() {
+  async leaveRoom() {
     if (!this.roomPlugin) return;
 
     console.log("[JanusDialogen] Leaving room...");
@@ -786,10 +931,8 @@ async leaveRoom() {
 
     this.roomPlugin = null;
     this.players.clear();
-    
-    // ✅ TAMBAHKAN INI:
-    this.processedMessageIds.clear();
-    
+    this.processedMessageIds.clear(); // ✅ Clear deduplication set
+
     this.currentRoomCode = "";
     this.currentUsername = "";
     this.isHost = false;
@@ -819,12 +962,13 @@ async leaveRoom() {
 
     // ✅ TAMBAHKAN INI:
     this.processedMessageIds.clear();
-    
+
     this._onPlayerJoinCallbacks = [];
     this._onPlayerLeaveCallbacks = [];
     this._onMessageCallbacks = [];
     this._onGameStartCallbacks = [];
     this._onStatusCallbacks = [];
     this._onHostDisconnectCallbacks = [];
+    this._onSettingsUpdateCallbacks = [];
   }
 }
