@@ -3,20 +3,20 @@ import {
   JanusDialogenService,
   type Player,
   type GameMessage,
+  type SettingsUpdate,
 } from "../utils/JanusService";
 import adapter from "webrtc-adapter";
 (window as any).adapter = adapter;
 
 export interface UseJanusRoomReturn {
-  // State
   players: Ref<Player[]>;
   messages: Ref<GameMessage[]>;
   isConnected: Ref<boolean>;
   isLoading: Ref<boolean>;
   error: Ref<string | null>;
   status: Ref<string>;
-
-  // Methods
+  gameSettings: Ref<{ mode: string; timeLimit: string }>; // ✅ TAMBAHKAN
+  maxPlayers: Ref<number>;
   init: () => Promise<void>;
   createRoom: (roomCode: string, username: string) => Promise<void>;
   joinRoom: (roomCode: string, username: string) => Promise<void>;
@@ -28,8 +28,8 @@ export interface UseJanusRoomReturn {
   getRoomInfo: () => any;
   getPlayers: () => Player[];
   onHostDisconnect: (callback: () => void) => void;
-
-  // Room info
+  onSettingsUpdate: (callback: (settings: SettingsUpdate) => void) => void;
+  broadcastSettingsUpdate: (settings: SettingsUpdate) => boolean;
   roomCode: Ref<string>;
   username: Ref<string>;
   isHost: Ref<boolean>;
@@ -37,15 +37,27 @@ export interface UseJanusRoomReturn {
 
 let janusService: JanusDialogenService | null = null;
 
+// ✅ CRITICAL FIX: Global deduplication set for messages
+const processedMessageIds = new Set<string>();
+
+// ✅ NEW: Track ALL active player refs across all components
+const activePlayerRefs = new Set<Ref<Player[]>>();
+const activeMessageRefs = new Set<Ref<GameMessage[]>>();
+const activeStatusRefs = new Set<Ref<string>>();
+
+let callbacksRegistered = false;
+const activeGameSettingsRefs = new Set<
+  Ref<{ mode: string; timeLimit: string }>
+>();
+const activeMaxPlayersRefs = new Set<Ref<number>>();
+
 export function useJanusRoom(
   serverUrl: string = "https://janus.cloudwego.net/janus"
 ): UseJanusRoomReturn {
-  // Initialize service once
   if (!janusService) {
     janusService = new JanusDialogenService(serverUrl);
   }
 
-  // Reactive state
   const players = ref<Player[]>([]);
   const messages = ref<GameMessage[]>([]);
   const isConnected = ref(false);
@@ -55,92 +67,164 @@ export function useJanusRoom(
   const roomCode = ref("");
   const username = ref("");
   const isHost = ref(false);
+  const gameSettings = ref({ mode: "Bahasa", timeLimit: "2" }); // ✅ TAMBAHKAN
+  const maxPlayers = ref(5);
 
-  // Setup callbacks
-  janusService.onPlayerJoin((player: Player) => {
-    console.log("[useJanusRoom] Player joined:", player);
+  // ✅ Register this instance's refs
+  activePlayerRefs.add(players);
+  activeMessageRefs.add(messages);
+  activeStatusRefs.add(status);
+  activeGameSettingsRefs.add(gameSettings); // ✅ TAMBAHKAN
+  activeMaxPlayersRefs.add(maxPlayers);
 
-    const existingIndex = players.value.findIndex(
-      (p) => p.username === player.username
+  // ✅ Sync dari service IMMEDIATELY untuk ALL refs
+  const servicePlayers = janusService.getPlayers();
+  if (servicePlayers.length > 0) {
+    players.value = [...servicePlayers];
+    console.log(
+      "[useJanusRoom] 🔄 Synced players on mount:",
+      players.value.length
     );
-    if (existingIndex === -1) {
-      players.value.push(player);
-    } else {
-      players.value[existingIndex] = player;
-    }
-  });
+  }
 
-  janusService.onPlayerLeave((playerUsername: string) => {
-    console.log("[useJanusRoom] Player left:", playerUsername);
-    players.value = players.value.filter((p) => p.username !== playerUsername);
-  });
+  if (!callbacksRegistered && janusService) {
+    console.log("[useJanusRoom] 🎯 Registering callbacks (ONE TIME ONLY)");
 
-  // ✅ CRITICAL FIX: Handle BOTH onMessage AND onGameStart
-  janusService.onMessage((msg: GameMessage) => {
-    console.log("[useJanusRoom] Message received:", msg);
-    
-    // ✅ Parse nested JSON in message field
-    if (msg.type === "chat" && msg.message) {
-      try {
-        const parsed = JSON.parse(msg.message);
-        console.log("[useJanusRoom] Parsed nested message:", parsed);
-        
-        // ✅ Check if it's actually a game_event
-        if (parsed.type === "game_event" && parsed.event === "start_game") {
-          console.log("[useJanusRoom] 🎮 GAME START detected in chat message!");
-          
-          // Convert to proper game_event and push to messages
-          const gameEventMessage: GameMessage = {
-            type: "game_event",
-            room_code: roomCode.value,
-            sender: msg.sender,
-            message: "Game started",
-            timestamp: msg.timestamp,
-            data: {
-              event: "start_game",
-              ...parsed.data
-            }
-          };
-          
-          messages.value.push(gameEventMessage);
-          console.log("[useJanusRoom] ✅ Pushed game_event to messages");
-          return; // Don't push the original chat message
+    janusService.onPlayerJoin((player: Player) => {
+      console.log(
+        "[useJanusRoom] Player joined callback triggered:",
+        player.username
+      );
+
+      // ✅ Update ALL active refs
+      activePlayerRefs.forEach((playersRef) => {
+        const existingIndex = playersRef.value.findIndex(
+          (p) => p.username === player.username
+        );
+        if (existingIndex === -1) {
+          playersRef.value.push(player);
+          console.log(`[useJanusRoom] ✅ Added ${player.username} to a ref`);
+        } else {
+          playersRef.value[existingIndex] = player;
+          console.log(`[useJanusRoom] ♻️ Updated ${player.username} in a ref`);
         }
-      } catch (e) {
-        // Not JSON, treat as regular message
+      });
+    });
+
+    janusService.onPlayerLeave((playerUsername: string) => {
+      console.log(
+        "[useJanusRoom] Player left callback triggered:",
+        playerUsername
+      );
+
+      // ✅ Update ALL active refs
+      activePlayerRefs.forEach((playersRef) => {
+        playersRef.value = playersRef.value.filter(
+          (p) => p.username !== playerUsername
+        );
+      });
+    });
+
+    janusService.onMessage((msg: GameMessage) => {
+      const msgId = `${msg.type}_${msg.sender}_${
+        msg.timestamp
+      }_${msg.message?.substring(0, 50)}`;
+
+      if (processedMessageIds.has(msgId)) {
+        console.log(`[useJanusRoom] 🚫 Skip duplicate message`);
+        return;
       }
-    }
-    
-    // Push regular messages
-    messages.value.push(msg);
-  });
 
-  // ✅ Keep onGameStart for direct game_event type
-  janusService.onGameStart((data: any) => {
-    console.log("[useJanusRoom] Game started (direct):", data);
-    
-    const gameEventMessage: GameMessage = {
-      type: "game_event",
-      room_code: roomCode.value,
-      sender: "system",
-      message: "Game started",
-      timestamp: new Date().toISOString(),
-      data: {
-        event: "start_game",
-        ...data
+      processedMessageIds.add(msgId);
+
+      if (processedMessageIds.size > 100) {
+        const firstKey = processedMessageIds.values().next().value;
+        if (firstKey) processedMessageIds.delete(firstKey);
       }
-    };
-    
-    messages.value.push(gameEventMessage);
-    console.log("[useJanusRoom] ✅ Pushed game_event to messages (direct)");
-  });
 
-  janusService.onStatus((statusMsg: string) => {
-    console.log("[useJanusRoom] Status:", statusMsg);
-    status.value = statusMsg;
-  });
+      console.log("[useJanusRoom] ✅ Message received:", msg.type, msg.sender);
 
-  // Methods
+      // Handle nested JSON...
+      if (msg.type === "chat" && msg.message) {
+        try {
+          const parsed = JSON.parse(msg.message);
+          if (parsed.type === "game_event" && parsed.event === "start_game") {
+            const gameEventMessage: GameMessage = {
+              type: "game_event",
+              room_code: msg.room_code,
+              sender: msg.sender,
+              message: "Game started",
+              timestamp: msg.timestamp,
+              data: { event: "start_game", ...parsed.data },
+            };
+
+            // ✅ Push to ALL active message refs
+            activeMessageRefs.forEach((msgRef) => {
+              msgRef.value.push(gameEventMessage);
+            });
+            return;
+          }
+        } catch (e) {
+          // Not JSON
+        }
+      }
+
+      // ✅ Push to ALL active message refs
+      activeMessageRefs.forEach((msgRef) => {
+        msgRef.value.push(msg);
+      });
+    });
+
+    janusService.onGameStart((data: any) => {
+      console.log("[useJanusRoom] Game started (direct):", data);
+      const gameEventMessage: GameMessage = {
+        type: "game_event",
+        room_code: roomCode.value,
+        sender: "system",
+        message: "Game started",
+        timestamp: new Date().toISOString(),
+        data: { event: "start_game", ...data },
+      };
+
+      // ✅ Push to ALL active message refs
+      activeMessageRefs.forEach((msgRef) => {
+        msgRef.value.push(gameEventMessage);
+      });
+    });
+
+    janusService.onStatus((statusMsg: string) => {
+      console.log("[useJanusRoom] Status:", statusMsg);
+
+      // ✅ Update ALL active status refs
+      activeStatusRefs.forEach((statusRef) => {
+        statusRef.value = statusMsg;
+      });
+    });
+
+    janusService.onSettingsUpdate((settings: SettingsUpdate) => {
+      console.log("[useJanusRoom] Settings update received:", settings);
+
+      // ✅ ONLY update untuk NON-HOST (guests)
+      // Host sudah punya value yang benar dari user input
+      activeGameSettingsRefs.forEach((settingsRef) => {
+        settingsRef.value = {
+          mode: settings.mode,
+          timeLimit: settings.timeLimit,
+        };
+        console.log("[useJanusRoom] ✅ Updated gameSettings in a ref");
+      });
+
+      if (settings.maxPlayers !== undefined) {
+        activeMaxPlayersRefs.forEach((maxPlayersRef) => {
+          maxPlayersRef.value = settings.maxPlayers!;
+          console.log("[useJanusRoom] ✅ Updated maxPlayers in a ref");
+        });
+      }
+    });
+
+    callbacksRegistered = true;
+  }
+
   const init = async () => {
     isLoading.value = true;
     error.value = null;
@@ -168,6 +252,7 @@ export function useJanusRoom(
       username.value = user;
       isHost.value = true;
 
+      // ✅ Sync to current ref
       players.value = janusService!.getPlayers();
 
       console.log("[useJanusRoom] ✅ Room created");
@@ -193,9 +278,10 @@ export function useJanusRoom(
       janusService!.requestParticipants();
 
       setTimeout(() => {
+        // ✅ Sync to current ref
         players.value = janusService!.getPlayers();
         console.log("[useJanusRoom] Synced players after join:", players.value);
-        
+
         if (players.value.length === 0) {
           console.warn("[useJanusRoom] Players empty, requesting again...");
           janusService!.requestParticipants();
@@ -265,6 +351,9 @@ export function useJanusRoom(
       username.value = "";
       isHost.value = false;
 
+      // ✅ Clear processed messages
+      processedMessageIds.clear();
+
       console.log("[useJanusRoom] ✅ Left room");
     } catch (err: any) {
       error.value = err.message || "Failed to leave room";
@@ -279,8 +368,33 @@ export function useJanusRoom(
     janusService!.onHostDisconnect(callback);
   };
 
+  const onSettingsUpdate = (callback: (settings: SettingsUpdate) => void) => {
+    janusService!.onSettingsUpdate(callback);
+  };
+
+  const broadcastSettingsUpdate = (settings: SettingsUpdate): boolean => {
+    if (!janusService!.isRoomHost()) {
+      error.value = "Only host can update settings";
+      return false;
+    }
+
+    const success = janusService!.broadcastSettingsUpdate(settings);
+    if (!success) {
+      error.value = "Failed to broadcast settings";
+    }
+    return success;
+  };
+
   onUnmounted(() => {
-    console.log("[useJanusRoom] Component unmounted, keeping room alive");
+    // ✅ Cleanup: Remove this instance's refs
+    activePlayerRefs.delete(players);
+    activeMessageRefs.delete(messages);
+    activeStatusRefs.delete(status);
+    activeGameSettingsRefs.delete(gameSettings);
+    activeMaxPlayersRefs.delete(maxPlayers);
+
+    console.log("[useJanusRoom] Component unmounted, refs cleaned up");
+    console.log("[useJanusRoom] Active refs remaining:", activePlayerRefs.size);
   });
 
   return {
@@ -293,6 +407,8 @@ export function useJanusRoom(
     roomCode,
     username,
     isHost,
+    gameSettings,
+    maxPlayers,
     init,
     createRoom,
     joinRoom,
@@ -304,5 +420,7 @@ export function useJanusRoom(
     getRoomInfo,
     getPlayers,
     onHostDisconnect,
+    onSettingsUpdate,
+    broadcastSettingsUpdate,
   };
 }

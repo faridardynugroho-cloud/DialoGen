@@ -1,10 +1,21 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6">
+  <div
+    class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6"
+  >
     <!-- Loading Overlay -->
-    <div v-if="isLoadingQuestion" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20">
-        <div class="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"></div>
-        <p class="text-white text-lg">{{ IS_HOST ? 'Generating question...' : 'Waiting for host...' }}</p>
+    <div
+      v-if="isLoadingQuestion"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    >
+      <div
+        class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-8 text-center border border-white border-opacity-20"
+      >
+        <div
+          class="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"
+        ></div>
+        <p class="text-white text-lg">
+          {{ IS_HOST ? "Generating question..." : "Waiting for host..." }}
+        </p>
       </div>
     </div>
 
@@ -44,7 +55,13 @@
                   }"
                 >
                   {{
-                    index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1
+                    index === 0
+                      ? "🥇"
+                      : index === 1
+                      ? "🥈"
+                      : index === 2
+                      ? "🥉"
+                      : index + 1
                   }}
                 </div>
                 <div
@@ -118,7 +135,13 @@
                 }"
               >
                 {{
-                  index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : index + 1
+                  index === 0
+                    ? "🥇"
+                    : index === 1
+                    ? "🥈"
+                    : index === 2
+                    ? "🥉"
+                    : index + 1
                 }}
               </div>
               <div
@@ -157,41 +180,54 @@
     </div>
 
     <!-- Main Game UI -->
-   <div v-if="!showScoreboard && !showFinalResults" class="relative z-10 max-w-4xl mx-auto">
+    <div
+      v-if="!showScoreboard && !showFinalResults"
+      class="relative z-10 max-w-4xl mx-auto"
+    >
       <!-- Header -->
       <div class="flex items-center justify-between mb-8">
-        <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20">
+        <div
+          class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
+        >
           <p class="text-gray-300 text-sm">Question</p>
-          <p class="text-2xl font-bold text-white">{{ currentQuestion }} / 10</p>
+          <p class="text-2xl font-bold text-white">
+            {{ currentQuestion }} / 10
+          </p>
         </div>
 
-        <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20">
+        <div
+          class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
+        >
           <p class="text-gray-300 text-sm">Time</p>
-          <p class="text-2xl font-bold" :class="timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-white'">
+          <p
+            class="text-2xl font-bold"
+            :class="timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-white'"
+          >
             {{ timeLeft }}s
           </p>
         </div>
 
-        <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20">
+        <div
+          class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
+        >
           <p class="text-gray-300 text-sm">Your Score</p>
           <p class="text-2xl font-bold text-yellow-400">{{ myScore }}</p>
         </div>
       </div>
 
       <!-- Question Card -->
-      <div class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl p-8 mb-6 border border-white border-opacity-20">
+      <div
+        class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl p-8 mb-6 border border-white border-opacity-20"
+      >
         <div class="mb-6">
-          <p class="text-gray-300 text-sm mb-2">Soal dalam Bahasa Daerah:</p>
-          <h2 class="text-3xl font-bold text-white mb-4">{{ quizData.question }}</h2>
-          
-          <p class="text-gray-300 text-sm mb-2">Tebak arti kata yang dicetak tebal:</p>
-          <p class="text-2xl font-bold text-yellow-400">{{ quizData.targetWord }}</p>
-        </div>
+          <p class="text-gray-300 text-sm mb-2">Terjemahkan kalimat berikut:</p>
+          <h2 class="text-4xl font-bold text-white mb-4">
+            {{ quizData.question }}
+          </h2>
 
-        <!-- Translation (shown after time's up) -->
-        <div v-if="timeLeft === 0" class="mt-6 pt-6 border-t border-white border-opacity-20 animate-fade-in">
-          <p class="text-gray-300 text-sm mb-2">Arti lengkap:</p>
-          <p class="text-xl text-white">{{ quizData.fullTranslation }}</p>
+          <p class="text-gray-300 text-sm">
+            Pilih arti yang benar dalam Bahasa Indonesia
+          </p>
         </div>
       </div>
 
@@ -207,8 +243,20 @@
         >
           <span class="flex items-center justify-between">
             <span>{{ option }}</span>
-            <span v-if="timeLeft === 0 && index === quizData.correctAnswer" class="text-2xl">✓</span>
-            <span v-if="selectedAnswer === index && index !== quizData.correctAnswer && timeLeft === 0" class="text-2xl">✗</span>
+            <span
+              v-if="timeLeft === 0 && index === quizData.correctAnswer"
+              class="text-2xl"
+              >✓</span
+            >
+            <span
+              v-if="
+                selectedAnswer === index &&
+                index !== quizData.correctAnswer &&
+                timeLeft === 0
+              "
+              class="text-2xl"
+              >✗</span
+            >
           </span>
         </button>
       </div>
@@ -217,53 +265,58 @@
 </template>
 
 <script setup lang="ts">
-// GameView.vue <script setup> - CRITICAL FIX for Empty Username/Room
-
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useJanusRoom } from "@/composable/UseJanusRoom";
-import { useGeminiQuiz, type QuizQuestion } from "@/utils/GeminiService";
+import {
+  useDeepSeekQuiz as useGeminiQuiz,
+  type QuizQuestion,
+} from "@/utils/AIService";
 
 const router = useRouter();
 
-// ✅ CRITICAL FIX 1: Get data from localStorage FIRST
 const storedUsername = localStorage.getItem("username") || "";
 const storedRoomCode = localStorage.getItem("roomCode") || "";
-const storedIsHost = localStorage.getItem("isHost") === "true";
 
-// ✅ Validate before proceeding
+// ✅ FIX: Cek isHost dengan benar
+const localIsHost = localStorage.getItem("isHost");
+const storedIsHost = localIsHost === "true";
+
 if (!storedUsername || !storedRoomCode) {
   console.error("[Game] ❌ Missing username or room code!");
   router.push("/");
 }
 
-const IS_HOST = ref(storedIsHost);
-Object.freeze(IS_HOST);
+// ✅ CRITICAL: Immutable IS_HOST
+const IS_HOST = storedIsHost;
 
-// Gemini API
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const geminiService = useGeminiQuiz(GEMINI_API_KEY);
+// ✅ Log untuk debugging
+console.log("[Game] 🔍 INIT CHECK:", {
+  username: storedUsername,
+  isHostFromStorage: localIsHost,
+  finalIsHost: IS_HOST,
+  roomCode: storedRoomCode,
+});
 
-// Janus
+const geminiService = useGeminiQuiz();
+
 const JANUS_SERVER = import.meta.env.VITE_JANUS_SERVER;
-const { players, messages, roomCode, username, sendMessage, leaveRoom } = useJanusRoom(JANUS_SERVER);
+const { players, messages, roomCode, username, sendMessage, leaveRoom } =
+  useJanusRoom(JANUS_SERVER);
 
-// ✅ CRITICAL FIX 2: Ensure username and roomCode are populated
-// Force set if composable hasn't initialized yet
-if (!username.value) {
-  username.value = storedUsername;
-}
-if (!roomCode.value) {
-  roomCode.value = storedRoomCode;
-}
+if (!username.value) username.value = storedUsername;
+if (!roomCode.value) roomCode.value = storedRoomCode;
 
-// Settings
-const savedSettings = JSON.parse(localStorage.getItem("gameSettings") || '{"mode":"bahasa","timeLimit":"5"}');
+const savedSettings = JSON.parse(
+  localStorage.getItem("gameSettings") || '{"mode":"bahasa","timeLimit":"5"}'
+);
 const gameCategory = ref(savedSettings.mode);
-const totalGameTime = savedSettings.timeLimit === "unlimited" ? 600 : parseInt(savedSettings.timeLimit) * 60;
+const totalGameTime =
+  savedSettings.timeLimit === "unlimited"
+    ? 600
+    : parseInt(savedSettings.timeLimit) * 60;
 const timePerQuestion = Math.floor(totalGameTime / 10);
 
-// Game State
 const currentQuestion = ref(1);
 const timeLeft = ref(timePerQuestion);
 const selectedAnswer = ref<number | null>(null);
@@ -276,12 +329,10 @@ const quizReadyForTimer = ref(false);
 
 const quizData = ref<QuizQuestion>({
   question: "",
-  targetWord: "",
   options: [],
   correctAnswer: 0,
-  fullTranslation: "",
   category: "",
-  region: ""
+  region: "",
 });
 
 interface PlayerScore {
@@ -298,193 +349,253 @@ const processedSeqNumbers = new Set<string>();
 let isGenerating = false;
 
 function createRegionSequence() {
-  if (!IS_HOST.value) return;
-  
+  if (!IS_HOST) {
+    console.warn("[createRegionSequence] ❌ BLOCKED! Not host");
+    return;
+  }
+
   const regions: string[] = [
-    'Javanese (Jawa)',
-    'Sundanese (Sunda)', 
-    'Balinese (Bali)',
-    'Minangkabau (Minang)',
-    'Batak'
+    "Javanese (Jawa)",
+    "Sundanese (Sunda)",
+    "Balinese (Bali)",
+    "Minangkabau (Minang)",
+    "Batak",
   ];
-  
+
   const sequence: string[] = [];
-  regions.forEach(region => {
+  regions.forEach((region) => {
     sequence.push(region, region);
   });
-  
+
   for (let i = sequence.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [sequence[i], sequence[j]] = [sequence[j]!, sequence[i]!];
   }
-  
+
   regionSequence.value = sequence;
-  console.log('[Host] Region sequence:', sequence);
+  console.log("[Host] Region sequence:", sequence);
 }
 
 const sortedPlayers = computed(() => {
-  console.log('[Scoreboard] Computing sortedPlayers...', {
-    playersCount: players.value.length,
-    scoresCount: Object.keys(playerScores.value).length,
-    players: players.value.map(p => p.username),
-    scores: playerScores.value
-  });
-
   const scores: PlayerScore[] = [];
-  
+
   players.value.forEach((player) => {
     const currentScore = playerScores.value[player.username] ?? 0;
     const prevRank = previousRankings.value[player.username] ?? 999;
-    
-    scores.push({ 
-      username: player.username, 
-      score: currentScore, 
-      lastChange: 0 
+
+    scores.push({
+      username: player.username,
+      score: currentScore,
+      lastChange: 0,
     });
   });
 
   scores.sort((a, b) => b.score - a.score);
-  
+
   scores.forEach((player, newRank) => {
     const prevRank = previousRankings.value[player.username] ?? 999;
     player.lastChange = prevRank - newRank;
   });
 
-  console.log('[Scoreboard] Sorted players:', scores);
   return scores;
 });
 
 let timerInterval: any = null;
 
-// ✅ CRITICAL FIX 3: Use storedUsername for hostId
 function broadcastMessage(type: string, data: any = {}) {
-  if (!IS_HOST.value) {
-    console.error(`[broadcastMessage] BLOCKED! Guest tried to broadcast ${type}`);
+  if (!IS_HOST) {
+    console.error(
+      `[broadcastMessage] ❌ BLOCKED! Guest tried to broadcast ${type}`
+    );
     return;
   }
-  
+
   const uniqueSeq = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const message = {
     type,
     ...data,
     seq: uniqueSeq,
-    hostId: storedUsername, // ✅ Use stored username instead of reactive
-    timestamp: Date.now()
+    hostId: storedUsername,
+    timestamp: Date.now(),
   };
-  
+
   console.log(`[Host] Broadcasting ${type} (seq: ${uniqueSeq})`);
   sendMessage(JSON.stringify(message));
 }
 
+function resetQuizState() {
+  selectedAnswer.value = null;
+  // ✅ Set ke nilai default timePerQuestion, BUKAN 0
+  timeLeft.value = timePerQuestion;
+  quizReadyForTimer.value = false;
+  
+  // Reset quiz data ke state kosong
+  quizData.value = {
+    question: "",
+    options: [],
+    correctAnswer: 0,
+    category: "",
+    region: ""
+  };
+  
+  console.log(`[${IS_HOST ? 'Host' : 'Guest'}] ✨ Quiz state reset`);
+}
+
 async function generateAndBroadcastQuiz() {
-  if (!IS_HOST.value) {
-    console.error("[generateAndBroadcastQuiz] BLOCKED! Not host!");
+  if (!IS_HOST) {
+    console.error("[generateAndBroadcastQuiz] ❌ BLOCKED! Not host!");
     return;
   }
-  
+
   if (isGenerating) {
-    console.warn("[generateAndBroadcastQuiz] Already generating, skip!");
+    console.warn("[generateAndBroadcastQuiz] Already generating, aborting...");
     return;
   }
-  
+
   isGenerating = true;
+
+  // ✅ RESET STATE DULU sebelum generate
+  resetQuizState();
+
   isLoadingQuestion.value = true;
+
+  // ✅ Broadcast reset ke semua guest SEBELUM generate
+  broadcastMessage("reset_quiz_state", {
+    questionNumber: currentQuestion.value,
+  });
+
+  // ✅ Kasih waktu guest untuk reset
+  await new Promise((resolve) => setTimeout(resolve, 100));
+
+  // ✅ Baru broadcast generating
+  broadcastMessage("generating_question", {
+    questionNumber: currentQuestion.value,
+  });
+
   console.log(`[Host] 🎯 Generating question ${currentQuestion.value}/10`);
 
   try {
     const questionIndex = currentQuestion.value - 1;
     const region = regionSequence.value[questionIndex];
-    
+
+    if (currentQuestion.value > 1) {
+      console.log("[Host] ⏳ Waiting 2s to prevent rate limit...");
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+    }
+
     const quiz = await geminiService.generateQuiz(gameCategory.value, region);
-    console.log(`[Host] ✅ Generated quiz:`, { region, question: quiz.question.substring(0, 50) });
-    
+    console.log(`[Host] ✅ Generated quiz:`, {
+      region,
+      question: quiz.question,
+      correctAnswer: quiz.correctAnswer,
+    });
+
+    // ✅ Set quiz data untuk host
     quizData.value = quiz;
     isLoadingQuestion.value = false;
     quizReadyForTimer.value = true;
-    
+
+    // ✅ Kurangi delay
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    // ✅ Broadcast ke semua guest
     broadcastMessage("new_question", {
       questionNumber: currentQuestion.value,
-      quizData: quiz
+      quizData: quiz,
     });
-    
+
     console.log(`[Host] 📤 Question ${currentQuestion.value} broadcasted`);
-    
+
+    // ✅ Kurangi wait time jadi 500ms saja
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // ✅ Baru broadcast start_timer
+    console.log("[Host] 🚀 Broadcasting start_timer");
+    broadcastMessage("start_timer");
+    startTimer();
   } catch (error) {
     console.error("[Host] ❌ Failed to generate quiz:", error);
     isLoadingQuestion.value = false;
+    isGenerating = false;
   } finally {
     isGenerating = false;
   }
 }
 
 function receiveQuizFromHost(data: any) {
-  if (IS_HOST.value) {
-    console.log("[Host] Skipping receiveQuizFromHost");
+  if (IS_HOST) {
+    console.log("[Guest] ❌ BLOCKED! Host should not receive quiz");
     return;
   }
-  
-  console.log(`[Guest] 📥 Received question ${data.questionNumber} (seq: ${data.seq})`);
-  
+
+  console.log(`[Guest] 📥 Received question ${data.questionNumber}`);
+
   currentQuestion.value = data.questionNumber;
   quizData.value = data.quizData;
   isLoadingQuestion.value = false;
   selectedAnswer.value = null;
   quizReadyForTimer.value = true;
-  
-  console.log(`[Guest] ✅ Quiz ready for timer`);
+
+  console.log(`[Guest] ✅ Quiz ready, waiting for timer signal`);
 }
 
 function startTimer() {
-  console.log(`[${IS_HOST.value ? 'Host' : 'Guest'}] ⏱️ Starting timer`);
+  const role = IS_HOST ? 'Host' : 'Guest';
+  console.log(`[${role}] ⏱️ Starting timer for Q${currentQuestion.value}`);
   
   if (timerInterval) {
+    console.warn(`[${role}] ⚠️ Clearing existing timer`);
     clearInterval(timerInterval);
   }
   
+  if (!quizData.value.question || !quizData.value.options || quizData.value.options.length !== 4) {
+    console.error(`[${role}] ❌ Invalid quiz data:`, quizData.value);
+    return;
+  }
+  
   timeLeft.value = timePerQuestion;
+  console.log(`[${role}] ⏰ Timer: ${timePerQuestion}s`);
   
   timerInterval = setInterval(() => {
     timeLeft.value--;
+    
     if (timeLeft.value <= 0) {
+      console.log(`[${role}] ⏰ Time's up!`);
       clearInterval(timerInterval);
+      // ✅ Set flag bahwa quiz sudah selesai
+      quizReadyForTimer.value = false;
       handleTimeUp();
     }
   }, 1000);
 }
 
 function handleTimeUp() {
-  console.log(`[${IS_HOST.value ? 'Host' : 'Guest'}] ⏰ Time's up!`);
-  
+  console.log(`[${IS_HOST ? "Host" : "Guest"}] ⏰ Time's up!`);
+
   if (selectedAnswer.value === null) {
     selectedAnswer.value = -1;
   }
 
-  // ✅ Use storedUsername
   if (selectedAnswer.value === quizData.value.correctAnswer) {
     myScore.value += 10;
     playerScores.value = {
       ...playerScores.value,
-      [storedUsername]: myScore.value
+      [storedUsername]: myScore.value,
     };
-    console.log(`[Score] 💯 Updated my score: ${myScore.value}`);
+    console.log(`[Score] 💯 My score: ${myScore.value}`);
   }
 
-  // Broadcast hasil
-  sendMessage(JSON.stringify({
-    type: "answer_result",
-    username: storedUsername, // ✅ Use stored username
-    correct: selectedAnswer.value === quizData.value.correctAnswer,
-    score: myScore.value,
-    timestamp: Date.now()
-  }));
+  sendMessage(
+    JSON.stringify({
+      type: "answer_result",
+      username: storedUsername,
+      correct: selectedAnswer.value === quizData.value.correctAnswer,
+      score: myScore.value,
+      timestamp: Date.now(),
+    })
+  );
 
-  const newRankings: Record<string, number> = {};
-  sortedPlayers.value.forEach((player, index) => {
-    newRankings[player.username] = index;
-  });
-  previousRankings.value = newRankings;
-
-  if (IS_HOST.value) {
+  if (IS_HOST) {
     setTimeout(() => {
       console.log("[Host] 📊 Broadcasting show_scoreboard");
       broadcastMessage("show_scoreboard");
@@ -503,24 +614,24 @@ function startScoreboardCountdown() {
       showScoreboard.value = false;
 
       if (currentQuestion.value >= 10) {
-        if (IS_HOST.value) {
+        if (IS_HOST) {
           console.log("[Host] 🏁 Broadcasting game_over");
           broadcastMessage("game_over");
         }
         showFinalResults.value = true;
       } else {
+        // ✅ Increment question number
         currentQuestion.value++;
-        selectedAnswer.value = null;
-        quizReadyForTimer.value = false;
-        
-        if (IS_HOST.value) {
-          console.log(`[Host] 🔄 Generating question ${currentQuestion.value}`);
-          generateAndBroadcastQuiz().then(() => {
-            setTimeout(() => {
-              broadcastMessage("start_timer");
-              startTimer();
-            }, 500);
-          });
+
+        // ✅ RESET STATE sebelum generate soal baru (untuk HOST & GUEST)
+        resetQuizState();
+
+        if (IS_HOST) {
+          console.log(`[Host] 🔄 Moving to question ${currentQuestion.value}`);
+          // ✅ Kurangi delay sebelum generate
+          setTimeout(() => {
+            generateAndBroadcastQuiz();
+          }, 200);
         }
       }
     }
@@ -531,17 +642,26 @@ function selectAnswer(index: number) {
   if (timeLeft.value === 0) return;
   selectedAnswer.value = index;
 
-  sendMessage(JSON.stringify({
-    type: "player_answer",
-    username: storedUsername, // ✅ Use stored username
-    answer: index,
-    correct: index === quizData.value.correctAnswer,
-    timestamp: Date.now()
-  }));
+  sendMessage(
+    JSON.stringify({
+      type: "player_answer",
+      username: storedUsername,
+      answer: index,
+      correct: index === quizData.value.correctAnswer,
+      timestamp: Date.now(),
+    })
+  );
 }
 
 function getButtonClass(index: number) {
-  if (timeLeft.value === 0) {
+  // ✅ Check jika belum ada quiz data
+  if (!quizData.value.question || quizData.value.options.length === 0) {
+    return "bg-white bg-opacity-10 text-gray-400 border border-white border-opacity-20 cursor-not-allowed";
+  }
+  
+  // ✅ PENTING: Hanya tampilkan jawaban benar jika timer BENAR-BENAR habis DAN quiz sudah ready
+  if (timeLeft.value === 0 && quizReadyForTimer.value === false) {
+    // Timer habis SETELAH quiz selesai dijawab
     if (index === quizData.value.correctAnswer) {
       return "bg-green-500 text-white ring-4 ring-green-300";
     }
@@ -551,6 +671,7 @@ function getButtonClass(index: number) {
     return "bg-white bg-opacity-10 text-gray-400 border border-white border-opacity-20";
   }
 
+  // Jika masih ada waktu atau sedang loading
   if (selectedAnswer.value === index) {
     return "bg-blue-500 text-white ring-4 ring-blue-300";
   }
@@ -562,14 +683,14 @@ async function handlePlayAgain() {
   currentQuestion.value = 1;
   myScore.value = 0;
   showFinalResults.value = false;
-  
+
   playerScores.value = {};
   previousRankings.value = {};
   quizReadyForTimer.value = false;
 
-  if (IS_HOST.value) {
+  if (IS_HOST) {
     console.log("[Host] 🔄 Restarting game");
-    geminiService.resetUsedWords();
+    geminiService.resetUsedSentences();
     createRegionSequence();
     processedSeqNumbers.clear();
   }
@@ -588,154 +709,176 @@ async function handleLeaveRoom() {
   router.push("/");
 }
 
-// ✅ Watch players untuk auto-add ke playerScores
-watch(players, (newPlayers) => {
-  console.log('[Watch Players] Players updated:', newPlayers.map(p => p.username));
-  
-  newPlayers.forEach((player) => {
-    if (playerScores.value[player.username] === undefined) {
-      console.log(`[Watch Players] 🆕 Adding ${player.username} to scores`);
-      playerScores.value = {
-        ...playerScores.value,
-        [player.username]: 0
-      };
-      previousRankings.value = {
-        ...previousRankings.value,
-        [player.username]: 999
-      };
-    }
-  });
-}, { deep: true, immediate: true });
+watch(
+  players,
+  (newPlayers) => {
+    newPlayers.forEach((player) => {
+      if (playerScores.value[player.username] === undefined) {
+        playerScores.value = {
+          ...playerScores.value,
+          [player.username]: 0,
+        };
+        previousRankings.value = {
+          ...previousRankings.value,
+          [player.username]: 999,
+        };
+      }
+    });
+  },
+  { deep: true, immediate: true }
+);
 
 let lastProcessedIndex = 0;
 
-watch(messages, (newMessages) => {
-  const newCount = newMessages.length;
-  
-  console.log(`[Watch] 📬 Processing ${newCount - lastProcessedIndex} new messages (isHost: ${IS_HOST.value})`);
-  
-  for (let i = lastProcessedIndex; i < newCount; i++) {
-    const msg = newMessages[i];
-    if (!msg || msg.type !== "chat") continue;
-    
-    try {
-      const data = JSON.parse(msg.message);
-      
-      if (data.seq && processedSeqNumbers.has(data.seq)) {
-        console.log(`[Dedupe] 🚫 Skipping duplicate seq: ${data.seq}`);
-        continue;
-      }
-      
-      if (data.seq) {
-        processedSeqNumbers.add(data.seq);
-      }
-      
-      console.log(`[Message #${i}] 📨 Type: ${data.type}, Seq: ${data.seq?.substring(0, 20)}, From: ${msg.sender}, isHost: ${IS_HOST.value}`);
-      
-      if (!IS_HOST.value) {
-        if (data.type === "new_question") {
-          console.log("[Guest] 📥 Processing new_question");
-          receiveQuizFromHost(data);
-        } 
-        else if (data.type === "start_timer") {
-          console.log("[Guest] ⏱️ Timer signal received");
-          
-          const attemptStartTimer = () => {
-            if (quizReadyForTimer.value) {
-              console.log("[Guest] ✅ Quiz ready, starting timer");
-              startTimer();
-              quizReadyForTimer.value = false;
-            } else {
-              console.warn("[Guest] ⏳ Quiz not ready, waiting...");
-              setTimeout(attemptStartTimer, 200);
-            }
-          };
-          
-          attemptStartTimer();
-        } 
-        else if (data.type === "show_scoreboard") {
-          console.log("[Guest] 📊 Showing scoreboard");
-          showScoreboard.value = true;
-          startScoreboardCountdown();
-        } 
-        else if (data.type === "game_over") {
-          console.log("[Guest] 🏁 Game over");
-          showFinalResults.value = true;
-        } 
-        else if (data.type === "game_restart") {
-          console.log("[Guest] 🔄 Restarting");
-          router.push("/lobby");
+watch(
+  messages,
+  (newMessages) => {
+    const newCount = newMessages.length;
+
+    for (let i = lastProcessedIndex; i < newCount; i++) {
+      const msg = newMessages[i];
+      if (!msg || msg.type !== "chat") continue;
+
+      try {
+        const data = JSON.parse(msg.message);
+
+        if (data.seq && processedSeqNumbers.has(data.seq)) {
+          console.log(`[Dedupe] 🚫 Skip duplicate: ${data.seq}`);
+          continue;
         }
+
+        if (data.seq) {
+          processedSeqNumbers.add(data.seq);
+        }
+
+        console.log(
+          `[Message] 📨 Type: ${data.type}, From: ${msg.sender}, MyRole: ${
+            IS_HOST ? "Host" : "Guest"
+          }`
+        );
+
+        // ✅ CRITICAL: Hanya guest yang proses broadcast dari host
+        if (!IS_HOST) {
+          // ✅ TAMBAHKAN: Handler reset state (PRIORITAS PERTAMA)
+          if (data.type === "reset_quiz_state") {
+            console.log("[Guest] 🔄 Resetting quiz state...");
+            resetQuizState();
+            currentQuestion.value = data.questionNumber;
+          } else if (data.type === "generating_question") {
+            console.log("[Guest] 🔄 Host is generating question...");
+            isLoadingQuestion.value = true;
+          } else if (data.type === "new_question") {
+            console.log("[Guest] 📥 Processing new_question");
+            receiveQuizFromHost(data);
+          } else if (data.type === "start_timer") {
+            console.log("[Guest] ⏱️ Timer signal received");
+
+            const attemptStartTimer = (attempts = 0) => {
+              if (quizReadyForTimer.value && quizData.value.question) {
+                console.log("[Guest] ✅ Starting timer NOW");
+                startTimer();
+                quizReadyForTimer.value = false;
+              } else if (attempts < 10) {
+                console.warn(
+                  `[Guest] ⏳ Quiz not ready, retry ${attempts + 1}/10`
+                );
+                setTimeout(() => attemptStartTimer(attempts + 1), 200);
+              } else {
+                console.error("[Guest] ❌ Quiz never loaded!");
+              }
+            };
+
+            attemptStartTimer();
+          } else if (data.type === "show_scoreboard") {
+            console.log("[Guest] 📊 Show scoreboard");
+            showScoreboard.value = true;
+            startScoreboardCountdown();
+          } else if (data.type === "game_over") {
+            console.log("[Guest] 🏁 Game over");
+            showFinalResults.value = true;
+          } else if (data.type === "game_restart") {
+            console.log("[Guest] 🔄 Restart");
+            router.push("/lobby");
+          }
+        }
+
+        // ✅ Semua player (host & guest) update score
+        if (data.type === "answer_result" && data.username) {
+          console.log(`[Score] 💯 ${data.username}: ${data.score} pts`);
+          playerScores.value = {
+            ...playerScores.value,
+            [data.username]: data.score,
+          };
+        }
+      } catch (e) {
+        console.error("[Watch] ❌ Parse error:", e);
       }
-      
-      if (data.type === "answer_result" && data.username) {
-        console.log(`[Score] 💯 ${data.username}: ${data.score}`);
-        playerScores.value = {
-          ...playerScores.value,
-          [data.username]: data.score
-        };
-        console.log(`[Score] Current scores:`, playerScores.value);
-      }
-      
-    } catch (e) {
-      console.error("[Watch] ❌ Parse error:", e);
     }
-  }
-  
-  lastProcessedIndex = newCount;
-}, { deep: true });
+
+    lastProcessedIndex = newCount;
+  },
+  { deep: true }
+);
 
 onMounted(async () => {
   console.log("=".repeat(60));
-  console.log(`[Game] ⚡ MOUNTED as ${IS_HOST.value ? '🔴 HOST' : '🔵 GUEST'}`);
-  console.log(`[Game] 👤 Username: ${storedUsername}`); // ✅ Use stored
-  console.log(`[Game] 🏠 Room: ${storedRoomCode}`); // ✅ Use stored
-  console.log(`[Game] 👥 Initial players:`, players.value.map(p => p.username));
+  console.log(`[Game] ⚡ MOUNTED`);
+  console.log(`[Game] 👤 Username: ${storedUsername}`);
+  console.log(`[Game] 🏠 Room: ${storedRoomCode}`);
+  console.log(`[Game] 🔍 localStorage.isHost: "${localIsHost}"`);
+  console.log(`[Game] 🎯 Computed IS_HOST: ${IS_HOST}`);
   console.log("=".repeat(60));
-  
-  // ✅ Wait for players to sync (give it time)
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // ✅ Initialize scores including SELF
-  const initialScores: Record<string, number> = {
-    [storedUsername]: 0 // ✅ Ensure self is included
-  };
-  const initialRankings: Record<string, number> = {
-    [storedUsername]: 999
-  };
-  
+
+  // ✅ CRITICAL SAFETY CHECK
+  if (!IS_HOST && !storedIsHost) {
+    console.log("[Game] ✅ Confirmed as GUEST");
+  } else if (IS_HOST && storedIsHost) {
+    console.log("[Game] ✅ Confirmed as HOST");
+  } else {
+    console.error("[Game] ❌❌❌ MISMATCH DETECTED!");
+    console.error("[Game] IS_HOST:", IS_HOST);
+    console.error("[Game] storedIsHost:", storedIsHost);
+    console.error("[Game] localStorage.isHost:", localIsHost);
+
+    // ✅ Force correct value
+    const correctIsHost = localStorage.getItem("isHost") === "true";
+    console.log("[Game] 🔧 Forcing IS_HOST to:", correctIsHost);
+
+    // Redirect back to lobby if mismatch
+    alert("Session error detected. Returning to lobby...");
+    router.push("/lobby");
+    return;
+  }
+
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  const initialScores: Record<string, number> = {};
+  const initialRankings: Record<string, number> = {};
+
   players.value.forEach((player) => {
     initialScores[player.username] = 0;
     initialRankings[player.username] = 999;
-    console.log(`[Init] 🎮 Added ${player.username} to scoreboard`);
   });
-  
+
   playerScores.value = initialScores;
   previousRankings.value = initialRankings;
-  
-  console.log(`[Init] 📊 Initial scores:`, playerScores.value);
 
-  if (IS_HOST.value) {
+  if (IS_HOST) {
     console.log("[Host] 🎮 Initializing as GAME MASTER");
-    geminiService.resetUsedWords();
+    geminiService.resetUsedSentences();
     createRegionSequence();
-    
+
     await generateAndBroadcastQuiz();
-    
-    setTimeout(() => {
-      console.log("[Host] 🚀 Broadcasting start_timer");
-      broadcastMessage("start_timer");
-      startTimer();
-    }, 1000);
   } else {
     isLoadingQuestion.value = true;
-    console.log("[Guest] ⏳ Waiting for host...");
+    console.log("[Guest] ⏳ Waiting for host to broadcast question...");
+    console.log("[Guest] ⚠️ I should NOT generate quiz myself!");
   }
 });
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
-  console.log(`[Game] 👋 Unmounted (${IS_HOST.value ? 'Host' : 'Guest'})`);
+  console.log(`[Game] 👋 Unmounted (${IS_HOST ? "Host" : "Guest"})`);
 });
 </script>
 
