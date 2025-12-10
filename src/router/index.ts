@@ -90,7 +90,16 @@ const router = createRouter({
 
 // Global navigation guards
 router.beforeEach((to, from, next) => {
-  console.log(`[Router] Navigating from ${from.path} to ${to.path}`);
+  console.log("=".repeat(60));
+  console.log(`[Router] Navigation: ${from.path} → ${to.path}`);
+  console.log("[Router] 📦 localStorage State:", {
+    username: localStorage.getItem("username"),
+    roomCode: localStorage.getItem("roomCode"),
+    isHost: localStorage.getItem("isHost"),
+    gameStarted: localStorage.getItem("gameStarted"),
+    gameSettings: localStorage.getItem("gameSettings")
+  });
+  console.log("=".repeat(60))
   next();
 });
 

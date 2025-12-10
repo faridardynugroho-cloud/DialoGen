@@ -398,6 +398,12 @@
                   }}</span>
                 </div>
                 <div class="flex justify-between">
+                  <span class="text-gray-300">Time Limit</span>
+                  <span class="text-white font-medium">{{
+                    gameSettings.timeLimit || "Time"
+                  }} minutes</span>
+                </div>
+                <div class="flex justify-between">
                   <span class="text-gray-300">Players</span>
                   <span class="text-white font-medium"
                     >{{ players.length }}/{{ maxPlayers }}</span
@@ -444,13 +450,8 @@ import { useJanusRoom } from "@/composable/UseJanusRoom";
 
 const router = useRouter();
 const showCopyNotification = ref(false);
-const maxPlayers = ref(5);
 const isRedirecting = ref(false);
-
-const gameSettings = ref({
-  mode: "bahasa",
-  timeLimit: "2",
-});
+const isUpdatingFromBroadcast = ref(false);
 
 const JANUS_SERVER =
   import.meta.env.VITE_JANUS_SERVER || "https://janus.cloudwego.net/janus";
@@ -464,6 +465,8 @@ const {
   roomCode,
   username,
   isHost,
+  gameSettings,
+  maxPlayers,
   init,
   createRoom,
   joinRoom,
@@ -473,6 +476,8 @@ const {
   getRoomInfo,
   getPlayers,
   onHostDisconnect,
+  onSettingsUpdate,
+  broadcastSettingsUpdate,
 } = useJanusRoom(JANUS_SERVER);
 
 let syncInterval: any = null;
@@ -520,22 +525,21 @@ onMounted(async () => {
         console.log("[Lobby] Players synced:", updatedPlayers);
       }
     }, 2000);
-
   } catch (err) {
     console.error("Failed to setup room:", err);
     setTimeout(() => router.push("/"), 3000);
   }
 
   unregisterGuard = router.beforeEach((to, from, next) => {
-    if (to.path === '/game') {
-      const gameStarted = localStorage.getItem('gameStarted');
-      const roomCode = localStorage.getItem('roomCode');
-      
-      console.log('[Lobby->Game Guard] Checking access:', {
+    if (to.path === "/game") {
+      const gameStarted = localStorage.getItem("gameStarted");
+      const roomCode = localStorage.getItem("roomCode");
+
+      console.log("[Lobby->Game Guard] Checking access:", {
         gameStarted,
         roomCode,
         from: from.path,
-        to: to.path
+        to: to.path,
       });
     }
     next();
@@ -543,70 +547,126 @@ onMounted(async () => {
 });
 
 // ✅ ENHANCED WATCH with detailed logging
-watch(messages, (newMessages) => {
-  console.log("[Lobby] ==========================================");
-  console.log("[Lobby] 📬 Messages array updated!");
-  console.log("[Lobby] Total messages:", newMessages.length);
-  console.log("[Lobby] isRedirecting:", isRedirecting.value);
-  console.log("[Lobby] isHost:", isHost.value);
-  
-  if (isRedirecting.value) {
-    console.log("[Lobby] ⚠️ Already redirecting, SKIP");
-    return;
-  }
+watch(
+  messages,
+  (newMessages) => {
+    console.log("[Lobby] ==========================================");
+    console.log("[Lobby] 📬 Messages array updated!");
+    console.log("[Lobby] Total messages:", newMessages.length);
+    console.log("[Lobby] isRedirecting:", isRedirecting.value);
+    console.log("[Lobby] isHost:", isHost.value);
 
-  if (newMessages.length === 0) {
-    console.log("[Lobby] ⚠️ No messages, SKIP");
-    return;
-  }
-  
-  const lastMsg = newMessages[newMessages.length - 1];
-  console.log("[Lobby] 🔍 Last message:", JSON.stringify(lastMsg, null, 2));
-
-  // ✅ METHOD 1: Direct game_event type
-  if (lastMsg?.type === "game_event") {
-    console.log("[Lobby] ✅ METHOD 1: Direct game_event detected!");
-    const data = lastMsg.data || {};
-    console.log("[Lobby] Event data:", data);
-    
-    if (data.event === "start_game") {
-      console.log("[Lobby] 🎮 START GAME EVENT CONFIRMED!");
-      handleRedirect(data);
+    if (isRedirecting.value) {
+      console.log("[Lobby] ⚠️ Already redirecting, SKIP");
       return;
-    } else {
-      console.log("[Lobby] ⚠️ game_event but not start_game, event:", data.event);
     }
-  }
 
-  // ✅ METHOD 2: Parse nested JSON in chat message
-  if (lastMsg?.type === "chat" && lastMsg?.message) {
-    console.log("[Lobby] 🔍 METHOD 2: Trying to parse chat message...");
-    try {
-      const parsed = JSON.parse(lastMsg.message);
-      console.log("[Lobby] 📦 Parsed nested content:", JSON.stringify(parsed, null, 2));
-      
-      if (parsed.type === "game_event" && parsed.event === "start_game") {
-        console.log("[Lobby] ✅ START GAME found in nested JSON!");
-        handleRedirect(parsed.data || {});
+    if (newMessages.length === 0) {
+      console.log("[Lobby] ⚠️ No messages, SKIP");
+      return;
+    }
+
+    const lastMsg = newMessages[newMessages.length - 1];
+    console.log("[Lobby] 🔍 Last message:", JSON.stringify(lastMsg, null, 2));
+
+    // ✅ METHOD 1: Direct game_event type
+    if (lastMsg?.type === "game_event") {
+      console.log("[Lobby] ✅ METHOD 1: Direct game_event detected!");
+      const data = lastMsg.data || {};
+      console.log("[Lobby] Event data:", data);
+
+      if (data.event === "start_game") {
+        console.log("[Lobby] 🎮 START GAME EVENT CONFIRMED!");
+        handleRedirect(data);
         return;
       } else {
-        console.log("[Lobby] ℹ️ Parsed but not start_game:", {
-          type: parsed.type,
-          event: parsed.event
-        });
+        console.log(
+          "[Lobby] ⚠️ game_event but not start_game, event:",
+          data.event
+        );
       }
-    } catch (e) {
-      console.log("[Lobby] ℹ️ Not JSON or parse failed");
     }
+
+    // ✅ METHOD 2: Parse nested JSON in chat message
+    if (lastMsg?.type === "chat" && lastMsg?.message) {
+      console.log("[Lobby] 🔍 METHOD 2: Trying to parse chat message...");
+      try {
+        const parsed = JSON.parse(lastMsg.message);
+        console.log(
+          "[Lobby] 📦 Parsed nested content:",
+          JSON.stringify(parsed, null, 2)
+        );
+
+        if (parsed.type === "game_event" && parsed.event === "start_game") {
+          console.log("[Lobby] ✅ START GAME found in nested JSON!");
+          handleRedirect(parsed.data || {});
+          return;
+        } else {
+          console.log("[Lobby] ℹ️ Parsed but not start_game:", {
+            type: parsed.type,
+            event: parsed.event,
+          });
+        }
+      } catch (e) {
+        console.log("[Lobby] ℹ️ Not JSON or parse failed");
+      }
+    }
+
+    console.log("[Lobby] ⚠️ No start_game event detected in this message");
+    console.log("[Lobby] ==========================================");
+  },
+  { deep: true }
+);
+
+watch(
+  gameSettings,
+  (newSettings) => {
+    // ✅ SKIP jika update dari broadcast
+    if (isUpdatingFromBroadcast.value) {
+      console.log("[Lobby] ⏭️ Skip broadcast (triggered by incoming update)");
+      return;
+    }
+
+    if (!isHost.value) return; // Only host broadcasts
+
+    console.log("[Lobby] Host settings changed, broadcasting:", newSettings);
+
+    const settingsUpdate = {
+      mode: newSettings.mode,
+      timeLimit: newSettings.timeLimit,
+      maxPlayers: maxPlayers.value,
+    };
+
+    broadcastSettingsUpdate(settingsUpdate);
+  },
+  { deep: true }
+);
+
+watch(maxPlayers, (newValue) => {
+  // ✅ SKIP jika update dari broadcast
+  if (isUpdatingFromBroadcast.value) {
+    console.log(
+      "[Lobby] ⏭️ Skip maxPlayers broadcast (triggered by incoming update)"
+    );
+    return;
   }
-  
-  console.log("[Lobby] ⚠️ No start_game event detected in this message");
-  console.log("[Lobby] ==========================================");
-}, { deep: true });
+
+  if (!isHost.value) return; // Only host broadcasts
+
+  console.log("[Lobby] Host maxPlayers changed, broadcasting:", newValue);
+
+  const settingsUpdate = {
+    mode: gameSettings.value.mode,
+    timeLimit: gameSettings.value.timeLimit,
+    maxPlayers: newValue,
+  };
+
+  broadcastSettingsUpdate(settingsUpdate);
+});
 
 function handleRedirect(data: any) {
   console.log("[Lobby] 🚀 handleRedirect called with data:", data);
-  
+
   if (isRedirecting.value) {
     console.log("[Lobby] ❌ Already redirecting, abort");
     return;
@@ -616,31 +676,44 @@ function handleRedirect(data: any) {
   console.log("[Lobby] ✅ Set isRedirecting = true");
 
   const settings = {
-    mode: data.mode || gameSettings.value.mode || "bahasa",
-    timeLimit: data.timeLimit || gameSettings.value.timeLimit || "2"
+    mode: data.mode || gameSettings.value.mode || "Bahasa",
+    timeLimit: data.timeLimit || gameSettings.value.timeLimit || "2",
   };
-  
+
   console.log("[Lobby] 💾 Saving to localStorage:", settings);
   localStorage.setItem("gameStarted", "true");
   localStorage.setItem("gameSettings", JSON.stringify(settings));
-  
-  const saved = localStorage.getItem("gameStarted");
-  console.log("[Lobby] ✅ Verified localStorage.gameStarted =", saved);
-  
+
+  // ✅ FIX: CRITICAL - Set isHost untuk guest
+  if (!isHost.value) {
+    localStorage.setItem("isHost", "false");
+    console.log("[Lobby] ✅ GUEST: Set localStorage.isHost = false");
+  } else {
+    localStorage.setItem("isHost", "true");
+    console.log("[Lobby] ✅ HOST: Set localStorage.isHost = true");
+  }
+
+  const savedIsHost = localStorage.getItem("isHost");
+  console.log("[Lobby] ✅ Verified localStorage.isHost =", savedIsHost);
+  console.log("[Lobby] ✅ Verified isHost.value =", isHost.value);
+
   if (syncInterval) {
     clearInterval(syncInterval);
     console.log("[Lobby] 🧹 Cleared sync interval");
   }
-  
+
   console.log("[Lobby] 🚀 Calling router.push('/game')...");
-  router.push("/game").then(() => {
-    console.log("[Lobby] ✅ Router.push SUCCESS");
-  }).catch(err => {
-    console.error("[Lobby] ❌ Router.push FAILED:", err);
-    isRedirecting.value = false;
-    localStorage.removeItem("gameStarted");
-    localStorage.removeItem("gameSettings");
-  });
+  router
+    .push("/game")
+    .then(() => {
+      console.log("[Lobby] ✅ Router.push SUCCESS");
+    })
+    .catch((err) => {
+      console.error("[Lobby] ❌ Router.push FAILED:", err);
+      isRedirecting.value = false;
+      localStorage.removeItem("gameStarted");
+      localStorage.removeItem("gameSettings");
+    });
 }
 
 onUnmounted(() => {
@@ -669,37 +742,34 @@ const decreaseMaxPlayers = () => {
   }
 };
 
-const handleStartGame = () => {
-  console.log("[Lobby] ==========================================");
+async function handleStartGame() {
+  console.log("==========================================");
   console.log("[Lobby] 🎮 HOST CLICKED START GAME");
   console.log("[Lobby] Settings:", gameSettings.value);
-  console.log("[Lobby] ==========================================");
+  console.log("[Lobby] isHost (composable):", isHost.value); // ✅ Log untuk debug
+  console.log("==========================================");
 
-  const success = startGame({
-    ...gameSettings.value,
-    maxPlayers: maxPlayers.value,
-    startedAt: new Date().toISOString(),
-  });
+  // ✅ Save game settings
+  localStorage.setItem("gameSettings", JSON.stringify(gameSettings.value));
+  localStorage.setItem("gameStarted", "true");
 
-  if (success) {
-    console.log("[Lobby] ✅ startGame() returned true");
-    
-    // ✅ CRITICAL FIX: Set isHost SEBELUM redirect
-    localStorage.setItem('isHost', 'true');  // ✅✅✅ TAMBAHKAN INI!
-    localStorage.setItem('gameStarted', 'true');
-    localStorage.setItem('gameSettings', JSON.stringify(gameSettings.value));
-    
-    console.log("[Lobby] ✅ Set localStorage.isHost = true");
-    
-    if (syncInterval) clearInterval(syncInterval);
-    
-    console.log("[Lobby] 🚀 HOST redirecting to /game...");
-    router.push('/game');
+  // ✅ Broadcast game start via Janus
+  const startResult = startGame(gameSettings.value);
+  console.log("[Lobby] ✅ startGame() returned", startResult);
+
+  // ✅ FIX: Set localStorage.isHost berdasarkan composable
+  if (isHost.value) {
+    localStorage.setItem("isHost", "true");
+    console.log("[Lobby] ✅ Set localStorage.isHost = true (HOST)");
   } else {
-    console.error("[Lobby] ❌ startGame() returned false");
-    error.value = "Failed to start game";
+    localStorage.setItem("isHost", "false");
+    console.log("[Lobby] ✅ Set localStorage.isHost = false (GUEST)");
   }
-};
+
+  // ✅ Redirect ke game page
+  console.log("[Lobby] 🚀 Redirecting to /game...");
+  await router.push("/game");
+}
 
 const handleLeaveRoom = async () => {
   try {
@@ -708,6 +778,8 @@ const handleLeaveRoom = async () => {
     localStorage.removeItem("roomCode");
     localStorage.removeItem("username");
     localStorage.removeItem("isHost");
+    localStorage.removeItem("gameStarted"); // ✅ Clear game flag
+    localStorage.removeItem("gameSettings"); // ✅ Clear settings
     router.push("/");
   } catch (err) {
     console.error("Failed to leave room:", err);
