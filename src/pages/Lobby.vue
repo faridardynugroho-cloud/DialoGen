@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6"
+    class="min-h-screen bg-gradient-to-b from-red-600 to-white p-0 md:p-6"
   >
     <!-- Loading Overlay -->
     <div
@@ -25,7 +25,7 @@
     </div>
 
     <!-- 🔍 DEBUG PANEL - TOP RIGHT -->
-    <div class="fixed top-5 left-5 bg-black bg-opacity-80 text-white p-4 rounded-lg text-xs max-w-md z-40 max-h-96 overflow-y-auto">
+    <!-- <div class="fixed top-5 left-5 bg-black bg-opacity-80 text-white p-4 rounded-lg text-xs max-w-md z-40 max-h-96 overflow-y-auto">
       <div class="font-bold mb-2">🔍 Debug Panel</div>
       <div class="space-y-1">
         <div>Room: {{ roomCode }}</div>
@@ -42,38 +42,25 @@
           <div v-if="msg.data">Data: {{ JSON.stringify(msg.data) }}</div>
         </div>
       </div>
-    </div>
+    </div> -->
 
-    <div class="relative z-10 max-w-4xl mx-auto">
+    <div class="relative z-10 max-w-4xl mx-auto ">
       <!-- Header with Room Code -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-white mb-4">
+      <div class="flex items-center justify-between text-center  mb-2 px-4">
+        <h1 class="text-xl font-bold text-white mb-0">
           {{ isHost ? "Host Lobby" : "Lobby" }}
         </h1>
         <div
-          class="inline-flex items-center bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
+          class="inline-flex items-center  backdrop-filter backdrop-blur-lg rounded-xl px-0 py-3 "
         >
           <div
-            class="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-300 rounded-full flex items-center justify-center mr-3"
+            class="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center mr-3"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-              />
-            </svg>
+            
           </div>
           <div class="text-left">
             <p class="text-gray-300 text-sm">Room Code</p>
-            <p class="text-2xl font-bold text-white">{{ roomCode }}</p>
+            <p class="text-md font-bold text-white">{{ roomCode }}</p>
           </div>
 
           <button
@@ -102,32 +89,32 @@
         </div>
       </div>
 
-      <div class="grid md:grid-cols-3 gap-6">
+      <div class="grid md:grid-cols-3 gap-0 md:gap-6">
         <!-- Players List -->
         <div
-          class="md:col-span-2 bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+          class="md:col-span-2 bg-white  rounded-tr-2xl rounded-tl-2xl md:rounded-2xl shadow-xl p-3 border border-white border-opacity-20"
         >
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-white">Players</h2>
+          <div class="flex items-center justify-center mb-3">
+            <h2 class="md:text-2xl font-bold text-black">Dashboard name</h2>
             <div
-              class="bg-white bg-opacity-20 rounded-full px-3 py-1 text-white text-sm"
+              class="bg-red rounded-full px-0 py-0 balck text-sm"
             >
               {{ players.length }}/{{ maxPlayers }}
             </div>
           </div>
-
-          <ul class="space-y-3">
+          <div class="max-h-80 md:max-h-full overflow-y-auto pr-2">
+          <ul class="space-y-2">
             <li
               v-for="player in players"
               :key="player.username"
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur rounded-xl p-4 flex items-center justify-between"
+              class="bg-red-500  rounded-xl p-2 flex items-center justify-between"
             >
               <div class="flex items-center">
                 <div class="relative mr-4">
                   <div
-                    class="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full flex items-center justify-center shadow-md"
+                    class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shadow-md"
                   >
-                    <span class="text-white font-bold">{{
+                    <span class="text-black font-bold">{{
                       player.username.charAt(0).toUpperCase()
                     }}</span>
                   </div>
@@ -168,7 +155,7 @@
                 </div>
                 <div>
                   <p class="text-white font-medium">{{ player.username }}</p>
-                  <p class="text-gray-300 text-sm">
+                  <p class="text-white text-sm">
                     {{ player.isHost ? "Host" : "Player" }}
                   </p>
                 </div>
@@ -177,64 +164,148 @@
                 <div
                   class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"
                 ></div>
-                <span class="text-green-400 text-sm">Online</span>
+                <span class="text-white text-sm">Online</span>
               </div>
             </li>
+            
 
             <li
               v-for="n in maxPlayers - players.length"
               :key="'empty-' + n"
-              class="bg-white bg-opacity-5 border-2 border-dashed border-white border-opacity-20 rounded-xl p-4 flex items-center justify-center"
+              class="bg-red  border-2 border-dashed border-white border-opacity-20 rounded-xl p-4 flex items-center justify-center"
             >
               <p class="text-gray-400">Waiting for player...</p>
             </li>
-          </ul>
+          </ul>\
+          </div>
+
+                        <!-- Game Settings versi mobile (masuk container kiri) -->
+              <div
+                v-if="isHost"
+                class="md:hidden mt-4 bg-white  backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-black "
+              >
+                <h3 class="text-xl font-bold text-black mb-4">Game Settings</h3>
+
+                <!-- copy isi setting-mu di sini sama persis -->
+                <div class="space-y-4">
+                  <div>
+                    <label class="text-black text-sm block mb-2">Game kategori</label>
+                    <select
+                      v-model="gameSettings.mode"
+                      class="dropdown-kategori w-full bg-gray-200 border border-white border-opacity-20 rounded-lg px-3 py-2 text-white"
+                    >
+                      <option class="bg-gray-200" value="bahasa">Bahasa</option>
+                      <option class="bg-gray-200" value="pakaian-adat">Pakaian Adat</option>
+                      <option class="bg-gray-200" value="rumah-adat">Rumah Adat</option>
+                      <option class="bg-gray-200" value="semua-kategori">Semua Kategori</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="text-black text-sm block mb-2">Time Limit</label>
+                    <select
+                      v-model="gameSettings.timeLimit"
+                      class="w-full bg-gray-200 border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
+                    >
+                      <option class="bg-gray-200" value="1">1 minutes</option>
+                      <option class="bg-gray-200" value="2">2 minutes</option>
+                      <option class="bg-gray-200" value="3">3 minutes</option>
+                      <option class="bg-gray-200" value="unlimited">No Limit</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="text-black text-sm block mb-2">Max Players</label>
+                    <div class="flex items-center">
+                      <button @click="decreaseMaxPlayers" class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-black hover:bg-opacity-30">-</button>
+                      <span class="mx-4 text-black font-medium">{{ maxPlayers }}</span>
+                      <button @click="increaseMaxPlayers" class="button-plus w-8 h-8  rounded-lg flex items-center justify-center text-white hover:bg-opacity-30">+</button>
+                    </div>
+                  </div>
+                </div>
+                <!-- Mobile Action Buttons -->
+             
+
+              </div>
+                <div class="md:hidden mt-6 space-y-3">
+                
+                <!-- Jika Host → tampilkan tombol Start Game -->
+                <button
+                  v-if="isHost"
+                  @click="handleStartGame"
+                  :disabled="players.length < 2"
+                  class="button-start w-full py-3 bg-green-500 hover:bg-green-600 
+                        disabled:bg-gray-400 disabled:cursor-not-allowed
+                        text-white rounded-xl font-bold text-lg transition-all duration-200"
+                >
+                  Start Game
+                </button>
+
+                <!-- Jika bukan Host → tampilkan status waiting -->
+                <div
+                  v-else
+                  class="w-full py-3 bg-white bg-opacity-20 text-white text-center rounded-xl"
+                >
+                  Waiting for host to start the game...
+                </div>
+
+                <!-- Tombol Leave Room -->
+                <button
+                  @click="handleLeaveRoom"
+                  class="w-full py-3 bg-red-500 hover:bg-red-600 
+                        text-white rounded-xl font-semibold transition-all duration-200"
+                >
+                  Leave Room
+                </button>
+              </div>
+
+        
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-6">
+        <div class="space-y-2 hidden md:block">
           <template v-if="isHost">
             <div
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
             >
-              <h3 class="text-xl font-bold text-white mb-4">Game Settings</h3>
+              <h3 class="text-xl font-bold text-black mb-4">Game Settings</h3>
               <div class="space-y-4">
                 <div>
-                  <label class="text-gray-300 text-sm block mb-2"
+                  <label class="text-black text-sm block mb-2"
                     >Game kategori</label
                   >
                   <select
                     v-model="gameSettings.mode"
-                    class="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg px-3 py-2 text-white"
+                    class="w-full bg-gray-200 border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
                   >
-                    <option value="bahasa">Bahasa</option>
-                    <option value="pakaian-adat">Pakaian Adat</option>
-                    <option value="rumah-adat">Rumah Adat</option>
-                    <option value="semua-kategori">Semua Kategori</option>
+                     <option class="bg-gray-200" value="bahasa">Bahasa</option>
+                      <option class="bg-gray-200" value="pakaian-adat">Pakaian Adat</option>
+                      <option class="bg-gray-200" value="rumah-adat">Rumah Adat</option>
+                      <option class="bg-gray-200" value="semua-kategori">Semua Kategori</option>
                   </select>
                 </div>
                 <div>
-                  <label class="text-gray-300 text-sm block mb-2"
+                  <label class="text-black text-sm block mb-2"
                     >Time Limit</label
                   >
                   <select
                     v-model="gameSettings.timeLimit"
-                    class="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg px-3 py-2 text-white"
+                    class="w-full  bg-gray-200  border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
                   >
-                    <option value="1">1 minutes</option>
-                    <option value="2">2 minutes</option>
-                    <option value="3">3 minutes</option>
-                    <option value="unlimited">No Limit</option>
+                     <option class="bg-gray-200" value="1">1 minutes</option>
+                      <option class="bg-gray-200" value="2">2 minutes</option>
+                      <option class="bg-gray-200" value="3">3 minutes</option>
+                      <option class="bg-gray-200" value="unlimited">No Limit</option>
                   </select>
                 </div>
                 <div>
-                  <label class="text-gray-300 text-sm block mb-2"
+                  <label class="text-black text-sm block mb-2"
                     >Max Players</label
                   >
                   <div class="flex items-center">
                     <button
                       @click="decreaseMaxPlayers"
-                      class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
+                      class="w-8 h-8 bg-gray-400 bg-opacity-20 rounded-lg flex items-center justify-center text-black hover:bg-opacity-30"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -251,12 +322,12 @@
                         />
                       </svg>
                     </button>
-                    <span class="mx-4 text-white font-medium">{{
+                    <span class="mx-4 text-black font-medium">{{
                       maxPlayers
                     }}</span>
                     <button
                       @click="increaseMaxPlayers"
-                      class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
+                      class="button-plus w-8 h-8  bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -763,5 +834,17 @@ select::-webkit-scrollbar-thumb {
 
 select::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+.button-plus{
+  background-color: #201658;
+}
+
+.dropdown-kategori{
+  background-color: #201658;
+}
+
+.button-start{
+  background-color: #201658;
 }
 </style>
