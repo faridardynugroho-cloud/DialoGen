@@ -21,6 +21,26 @@ export class OpenAIQuizService {
     this.usedSentences.clear()
   }
 
+  // ✅ NEW: Shuffle options dan update correctAnswer
+  private shuffleOptions(quiz: { question: string; options: string[]; correctAnswer: number }): { options: string[]; correctAnswer: number } {
+    const correctOption = quiz.options[quiz.correctAnswer]
+    
+    // Shuffle array
+    const shuffled = [...quiz.options]
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!]
+    }
+    
+    // Find new position of correct answer
+    const newCorrectAnswer = shuffled.indexOf(correctOption || '')
+    
+    return {
+      options: shuffled,
+      correctAnswer: newCorrectAnswer
+    }
+  }
+
   // ✅ Generate quiz menggunakan OpenAI via proxy server
   async generateQuiz(category: string, region?: string, maxRetries: number = 3): Promise<QuizQuestion> {
     const prompt = this.buildPrompt(category, region, Array.from(this.usedSentences))
@@ -99,6 +119,13 @@ export class OpenAIQuizService {
         console.warn('⚠️ Invalid correctAnswer, defaulting to 0')
         quiz.correctAnswer = 0
       }
+      
+      // ✅ SHUFFLE OPTIONS untuk random correct answer position
+      const shuffled = this.shuffleOptions(quiz)
+      quiz.options = shuffled.options
+      quiz.correctAnswer = shuffled.correctAnswer
+      
+      console.log(`🔀 Shuffled options, correct answer now at index: ${quiz.correctAnswer}`)
       
       // Check for duplicate sentences
       const sentenceKey = quiz.question.toLowerCase().trim()
@@ -225,8 +252,8 @@ Required JSON format:
 
 Example for Javanese (SHORT sentence):
 {
-  "question": "Aku arep turu",
-  "options": ["Saya akan tidur", "Saya akan makan", "Saya sedang bangun", "Saya sudah pergi"],
+  "question": "Aku arep turu ing omah",
+  "options": ["Saya akan tidur dirumah", "Saya akan makan dirumah", "Saya sedang bangun tidur", "Saya sudah pergi ke sekolah"],
   "correctAnswer": 0
 }
 
@@ -365,10 +392,20 @@ Generate the quiz now. Return ONLY the JSON object, nothing else.`
     }
     
     const quiz = availableQuizzes[Math.floor(Math.random() * availableQuizzes.length)]!
+    
+    // ✅ SHUFFLE fallback quiz options too!
+    const shuffled = this.shuffleOptions(quiz)
+    
+    const shuffledQuiz = {
+      ...quiz,
+      options: shuffled.options,
+      correctAnswer: shuffled.correctAnswer
+    }
+    
     this.usedSentences.add(quiz.question.toLowerCase().trim())
     
-    console.log(`📦 Using fallback quiz: "${quiz.question}"`)
-    return quiz
+    console.log(`📦 Using fallback quiz: "${quiz.question}" (correct at index ${shuffled.correctAnswer})`)
+    return shuffledQuiz
   }
 
   async generateBatchQuiz(category: string, count: number = 10): Promise<QuizQuestion[]> {
