@@ -48,7 +48,7 @@ export class OpenAIQuizService {
     try {
       console.log(`🤖 Generating quiz with OpenAI for category: ${category}, region: ${region || 'mixed'}`)
       
-      const response = await fetch(`openai/chat/completions`, {
+      const response = await fetch(`/api/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

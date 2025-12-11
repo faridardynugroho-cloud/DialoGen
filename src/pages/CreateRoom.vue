@@ -139,7 +139,7 @@
 
       <!-- Tips -->
       <div
-        class="max-w-md bg-white mt-5 bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-4 border border-gray border-opacity-80 z-10 animate-fade-in animation-delay-1000"
+        class="max-w-md bg-white mt-5 bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-4 border border-black border-opacity-30 z-10 animate-fade-in animation-delay-1000"
       >
         <div class="flex items-start">
           <svg
