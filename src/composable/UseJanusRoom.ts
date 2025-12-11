@@ -15,7 +15,7 @@ export interface UseJanusRoomReturn {
   isLoading: Ref<boolean>;
   error: Ref<string | null>;
   status: Ref<string>;
-  gameSettings: Ref<{ mode: string; timeLimit: string }>; // ✅ TAMBAHKAN
+  gameSettings: Ref<{ mode: string; timeLimit: string }>;
   maxPlayers: Ref<number>;
   init: () => Promise<void>;
   createRoom: (roomCode: string, username: string) => Promise<void>;
@@ -37,10 +37,8 @@ export interface UseJanusRoomReturn {
 
 let janusService: JanusDialogenService | null = null;
 
-// ✅ CRITICAL FIX: Global deduplication set for messages
 const processedMessageIds = new Set<string>();
 
-// ✅ NEW: Track ALL active player refs across all components
 const activePlayerRefs = new Set<Ref<Player[]>>();
 const activeMessageRefs = new Set<Ref<GameMessage[]>>();
 const activeStatusRefs = new Set<Ref<string>>();
@@ -51,9 +49,17 @@ const activeGameSettingsRefs = new Set<
 >();
 const activeMaxPlayersRefs = new Set<Ref<number>>();
 
+// ✅ CRITICAL: Track locked usernames per tab/window
+const WINDOW_ID = `window_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const lockedUsernames = new Map<string, string>(); // windowId -> username
+
 export function useJanusRoom(
   serverUrl: string = "https://janus.cloudwego.net/janus"
 ): UseJanusRoomReturn {
+  console.log("=".repeat(60));
+  console.log(`[useJanusRoom] 🆕 NEW INSTANCE - Window ID: ${WINDOW_ID}`);
+  console.log("=".repeat(60));
+
   if (!janusService) {
     janusService = new JanusDialogenService(serverUrl);
   }
@@ -67,57 +73,53 @@ export function useJanusRoom(
   const roomCode = ref("");
   const username = ref("");
   const isHost = ref(false);
-  const gameSettings = ref({ mode: "Bahasa", timeLimit: "2" }); // ✅ TAMBAHKAN
+  const gameSettings = ref({ mode: "Bahasa", timeLimit: "2" });
   const maxPlayers = ref(5);
 
-  // ✅ Register this instance's refs
   activePlayerRefs.add(players);
   activeMessageRefs.add(messages);
   activeStatusRefs.add(status);
-  activeGameSettingsRefs.add(gameSettings); // ✅ TAMBAHKAN
+  activeGameSettingsRefs.add(gameSettings);
   activeMaxPlayersRefs.add(maxPlayers);
 
-  // ✅ Sync dari service IMMEDIATELY untuk ALL refs
   const servicePlayers = janusService.getPlayers();
   if (servicePlayers.length > 0) {
     players.value = [...servicePlayers];
     console.log(
-      "[useJanusRoom] 🔄 Synced players on mount:",
+      `[useJanusRoom:${WINDOW_ID}] 🔄 Synced players on mount:`,
       players.value.length
     );
   }
 
   if (!callbacksRegistered && janusService) {
-    console.log("[useJanusRoom] 🎯 Registering callbacks (ONE TIME ONLY)");
+    console.log(`[useJanusRoom:${WINDOW_ID}] 🎯 Registering callbacks (ONE TIME ONLY)`);
 
     janusService.onPlayerJoin((player: Player) => {
       console.log(
-        "[useJanusRoom] Player joined callback triggered:",
+        `[useJanusRoom:${WINDOW_ID}] Player joined callback triggered:`,
         player.username
       );
 
-      // ✅ Update ALL active refs
       activePlayerRefs.forEach((playersRef) => {
         const existingIndex = playersRef.value.findIndex(
           (p) => p.username === player.username
         );
         if (existingIndex === -1) {
           playersRef.value.push(player);
-          console.log(`[useJanusRoom] ✅ Added ${player.username} to a ref`);
+          console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Added ${player.username} to a ref`);
         } else {
           playersRef.value[existingIndex] = player;
-          console.log(`[useJanusRoom] ♻️ Updated ${player.username} in a ref`);
+          console.log(`[useJanusRoom:${WINDOW_ID}] ♻️ Updated ${player.username} in a ref`);
         }
       });
     });
 
     janusService.onPlayerLeave((playerUsername: string) => {
       console.log(
-        "[useJanusRoom] Player left callback triggered:",
+        `[useJanusRoom:${WINDOW_ID}] Player left callback triggered:`,
         playerUsername
       );
 
-      // ✅ Update ALL active refs
       activePlayerRefs.forEach((playersRef) => {
         playersRef.value = playersRef.value.filter(
           (p) => p.username !== playerUsername
@@ -131,7 +133,7 @@ export function useJanusRoom(
       }_${msg.message?.substring(0, 50)}`;
 
       if (processedMessageIds.has(msgId)) {
-        console.log(`[useJanusRoom] 🚫 Skip duplicate message`);
+        console.log(`[useJanusRoom:${WINDOW_ID}] 🚫 Skip duplicate message`);
         return;
       }
 
@@ -142,9 +144,8 @@ export function useJanusRoom(
         if (firstKey) processedMessageIds.delete(firstKey);
       }
 
-      console.log("[useJanusRoom] ✅ Message received:", msg.type, msg.sender);
+      console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Message received:`, msg.type, msg.sender);
 
-      // Handle nested JSON...
       if (msg.type === "chat" && msg.message) {
         try {
           const parsed = JSON.parse(msg.message);
@@ -158,7 +159,6 @@ export function useJanusRoom(
               data: { event: "start_game", ...parsed.data },
             };
 
-            // ✅ Push to ALL active message refs
             activeMessageRefs.forEach((msgRef) => {
               msgRef.value.push(gameEventMessage);
             });
@@ -169,14 +169,13 @@ export function useJanusRoom(
         }
       }
 
-      // ✅ Push to ALL active message refs
       activeMessageRefs.forEach((msgRef) => {
         msgRef.value.push(msg);
       });
     });
 
     janusService.onGameStart((data: any) => {
-      console.log("[useJanusRoom] Game started (direct):", data);
+      console.log(`[useJanusRoom:${WINDOW_ID}] Game started (direct):`, data);
       const gameEventMessage: GameMessage = {
         type: "game_event",
         room_code: roomCode.value,
@@ -186,38 +185,34 @@ export function useJanusRoom(
         data: { event: "start_game", ...data },
       };
 
-      // ✅ Push to ALL active message refs
       activeMessageRefs.forEach((msgRef) => {
         msgRef.value.push(gameEventMessage);
       });
     });
 
     janusService.onStatus((statusMsg: string) => {
-      console.log("[useJanusRoom] Status:", statusMsg);
+      console.log(`[useJanusRoom:${WINDOW_ID}] Status:`, statusMsg);
 
-      // ✅ Update ALL active status refs
       activeStatusRefs.forEach((statusRef) => {
         statusRef.value = statusMsg;
       });
     });
 
     janusService.onSettingsUpdate((settings: SettingsUpdate) => {
-      console.log("[useJanusRoom] Settings update received:", settings);
+      console.log(`[useJanusRoom:${WINDOW_ID}] Settings update received:`, settings);
 
-      // ✅ ONLY update untuk NON-HOST (guests)
-      // Host sudah punya value yang benar dari user input
       activeGameSettingsRefs.forEach((settingsRef) => {
         settingsRef.value = {
           mode: settings.mode,
           timeLimit: settings.timeLimit,
         };
-        console.log("[useJanusRoom] ✅ Updated gameSettings in a ref");
+        console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Updated gameSettings in a ref`);
       });
 
       if (settings.maxPlayers !== undefined) {
         activeMaxPlayersRefs.forEach((maxPlayersRef) => {
           maxPlayersRef.value = settings.maxPlayers!;
-          console.log("[useJanusRoom] ✅ Updated maxPlayers in a ref");
+          console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Updated maxPlayers in a ref`);
         });
       }
     });
@@ -232,10 +227,10 @@ export function useJanusRoom(
     try {
       await janusService!.init();
       isConnected.value = true;
-      console.log("[useJanusRoom] ✅ Janus initialized");
+      console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Janus initialized`);
     } catch (err: any) {
       error.value = err.message || "Failed to initialize Janus";
-      console.error("[useJanusRoom] Init error:", err);
+      console.error(`[useJanusRoom:${WINDOW_ID}] Init error:`, err);
       throw err;
     } finally {
       isLoading.value = false;
@@ -243,6 +238,13 @@ export function useJanusRoom(
   };
 
   const createRoom = async (code: string, user: string) => {
+    console.log("=".repeat(60));
+    console.log(`[useJanusRoom:${WINDOW_ID}] 🏠 CREATE ROOM`);
+    console.log(`  Room Code: ${code}`);
+    console.log(`  Username: ${user}`);
+    console.log(`  Window ID: ${WINDOW_ID}`);
+    console.log("=".repeat(60));
+
     isLoading.value = true;
     error.value = null;
 
@@ -252,13 +254,53 @@ export function useJanusRoom(
       username.value = user;
       isHost.value = true;
 
-      // ✅ Sync to current ref
+      // ✅ CRITICAL: Lock username untuk window ini
+      lockedUsernames.set(WINDOW_ID, user);
+      
+      // ✅ CRITICAL: Set ke sessionStorage (tidak shared antar tabs!)
+      sessionStorage.setItem('lockedUsername', user);
+      sessionStorage.setItem('lockedRoomCode', code);
+      sessionStorage.setItem('lockedIsHost', 'true');
+      sessionStorage.setItem('windowId', WINDOW_ID);
+
+      console.log(`[useJanusRoom:${WINDOW_ID}] 🔒 LOCKED USERNAME: ${user}`);
+      console.log(`[useJanusRoom:${WINDOW_ID}] 💾 Saved to sessionStorage:`, {
+        lockedUsername: user,
+        lockedRoomCode: code,
+        lockedIsHost: true,
+        windowId: WINDOW_ID
+      });
+
+      // ✅ Verify localStorage (might be corrupted)
+      const lsUsername = localStorage.getItem('username');
+      const lsIsHost = localStorage.getItem('isHost');
+      
+      console.log(`[useJanusRoom:${WINDOW_ID}] 🔍 localStorage check:`, {
+        username: lsUsername,
+        isHost: lsIsHost,
+        match: lsUsername === user
+      });
+
+      if (lsUsername !== user) {
+        console.warn(`[useJanusRoom:${WINDOW_ID}] ⚠️ localStorage.username MISMATCH!`);
+        console.warn(`  Expected: ${user}`);
+        console.warn(`  Got: ${lsUsername}`);
+        console.warn(`  Fixing localStorage...`);
+        
+        localStorage.setItem('username', user);
+        localStorage.setItem('roomCode', code);
+        localStorage.setItem('isHost', 'true');
+        
+        console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Fixed localStorage`);
+      }
+
       players.value = janusService!.getPlayers();
 
-      console.log("[useJanusRoom] ✅ Room created");
+      console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Room created successfully`);
+      console.log(`[useJanusRoom:${WINDOW_ID}] Players in room:`, players.value.map(p => p.username));
     } catch (err: any) {
       error.value = err.message || "Failed to create room";
-      console.error("[useJanusRoom] Create room error:", err);
+      console.error(`[useJanusRoom:${WINDOW_ID}] Create room error:`, err);
       throw err;
     } finally {
       isLoading.value = false;
@@ -266,6 +308,13 @@ export function useJanusRoom(
   };
 
   const joinRoom = async (code: string, user: string) => {
+    console.log("=".repeat(60));
+    console.log(`[useJanusRoom:${WINDOW_ID}] 🚪 JOIN ROOM`);
+    console.log(`  Room Code: ${code}`);
+    console.log(`  Username: ${user}`);
+    console.log(`  Window ID: ${WINDOW_ID}`);
+    console.log("=".repeat(60));
+
     isLoading.value = true;
     error.value = null;
 
@@ -275,15 +324,54 @@ export function useJanusRoom(
       username.value = user;
       isHost.value = false;
 
+      // ✅ CRITICAL: Lock username untuk window ini
+      lockedUsernames.set(WINDOW_ID, user);
+      
+      // ✅ CRITICAL: Set ke sessionStorage (tidak shared antar tabs!)
+      sessionStorage.setItem('lockedUsername', user);
+      sessionStorage.setItem('lockedRoomCode', code);
+      sessionStorage.setItem('lockedIsHost', 'false');
+      sessionStorage.setItem('windowId', WINDOW_ID);
+
+      console.log(`[useJanusRoom:${WINDOW_ID}] 🔒 LOCKED USERNAME: ${user}`);
+      console.log(`[useJanusRoom:${WINDOW_ID}] 💾 Saved to sessionStorage:`, {
+        lockedUsername: user,
+        lockedRoomCode: code,
+        lockedIsHost: false,
+        windowId: WINDOW_ID
+      });
+
+      // ✅ Verify localStorage (might be corrupted)
+      const lsUsername = localStorage.getItem('username');
+      const lsIsHost = localStorage.getItem('isHost');
+      
+      console.log(`[useJanusRoom:${WINDOW_ID}] 🔍 localStorage check:`, {
+        username: lsUsername,
+        isHost: lsIsHost,
+        match: lsUsername === user
+      });
+
+      if (lsUsername !== user) {
+        console.warn(`[useJanusRoom:${WINDOW_ID}] ⚠️ localStorage.username MISMATCH!`);
+        console.warn(`  Expected: ${user}`);
+        console.warn(`  Got: ${lsUsername}`);
+        console.warn(`  Fixing localStorage...`);
+        
+        localStorage.setItem('username', user);
+        localStorage.setItem('roomCode', code);
+        localStorage.setItem('isHost', 'false');
+        
+        console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Fixed localStorage`);
+      }
+
       janusService!.requestParticipants();
 
       setTimeout(() => {
-        // ✅ Sync to current ref
         players.value = janusService!.getPlayers();
-        console.log("[useJanusRoom] Synced players after join:", players.value);
+        console.log(`[useJanusRoom:${WINDOW_ID}] Synced players after join:`, players.value.map(p => p.username));
 
         if (players.value.length === 0) {
-          console.warn("[useJanusRoom] Players empty, requesting again...");
+          console.warn(`[useJanusRoom:${WINDOW_ID}] Players empty, requesting again...`);
           janusService!.requestParticipants();
           setTimeout(() => {
             players.value = janusService!.getPlayers();
@@ -291,10 +379,10 @@ export function useJanusRoom(
         }
       }, 500);
 
-      console.log("[useJanusRoom] ✅ Joined room");
+      console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Joined room successfully`);
     } catch (err: any) {
       error.value = err.message || "Failed to join room";
-      console.error("[useJanusRoom] Join room error:", err);
+      console.error(`[useJanusRoom:${WINDOW_ID}] Join room error:`, err);
       throw err;
     } finally {
       isLoading.value = false;
@@ -326,6 +414,27 @@ export function useJanusRoom(
   };
 
   const startGame = (settings: any): boolean => {
+    console.log("=".repeat(60));
+    console.log(`[useJanusRoom:${WINDOW_ID}] 🎮 START GAME`);
+    console.log(`  Settings:`, settings);
+    console.log(`  Username:`, username.value);
+    console.log(`  isHost:`, isHost.value);
+    console.log(`  Window ID:`, WINDOW_ID);
+    
+    // ✅ Verify locked username
+    const sessionUsername = sessionStorage.getItem('lockedUsername');
+    const sessionIsHost = sessionStorage.getItem('lockedIsHost');
+    
+    console.log(`  sessionStorage.lockedUsername:`, sessionUsername);
+    console.log(`  sessionStorage.lockedIsHost:`, sessionIsHost);
+    
+    if (sessionUsername !== username.value) {
+      console.error(`[useJanusRoom:${WINDOW_ID}] ❌ USERNAME MISMATCH DETECTED!`);
+      console.error(`  composable.username: ${username.value}`);
+      console.error(`  sessionStorage: ${sessionUsername}`);
+    }
+    console.log("=".repeat(60));
+
     if (!janusService!.isRoomHost()) {
       error.value = "Only host can start the game";
       return false;
@@ -351,13 +460,16 @@ export function useJanusRoom(
       username.value = "";
       isHost.value = false;
 
-      // ✅ Clear processed messages
+      // ✅ Clear locked username
+      lockedUsernames.delete(WINDOW_ID);
+      sessionStorage.clear();
+
       processedMessageIds.clear();
 
-      console.log("[useJanusRoom] ✅ Left room");
+      console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Left room`);
     } catch (err: any) {
       error.value = err.message || "Failed to leave room";
-      console.error("[useJanusRoom] Leave room error:", err);
+      console.error(`[useJanusRoom:${WINDOW_ID}] Leave room error:`, err);
       throw err;
     } finally {
       isLoading.value = false;
@@ -386,15 +498,14 @@ export function useJanusRoom(
   };
 
   onUnmounted(() => {
-    // ✅ Cleanup: Remove this instance's refs
     activePlayerRefs.delete(players);
     activeMessageRefs.delete(messages);
     activeStatusRefs.delete(status);
     activeGameSettingsRefs.delete(gameSettings);
     activeMaxPlayersRefs.delete(maxPlayers);
 
-    console.log("[useJanusRoom] Component unmounted, refs cleaned up");
-    console.log("[useJanusRoom] Active refs remaining:", activePlayerRefs.size);
+    console.log(`[useJanusRoom:${WINDOW_ID}] Component unmounted, refs cleaned up`);
+    console.log(`[useJanusRoom:${WINDOW_ID}] Active refs remaining:`, activePlayerRefs.size);
   });
 
   return {
