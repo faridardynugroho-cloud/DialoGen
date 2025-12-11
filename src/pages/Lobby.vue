@@ -93,7 +93,7 @@
       <div class="grid md:grid-cols-3 gap-0 md:gap-6">
         <!-- Players List -->
         <div
-          class="md:col-span-2 bg-white  rounded-tr-2xl rounded-tl-2xl md:rounded-2xl shadow-xl p-3 border border-white border-opacity-20"
+          class="md:col-span-2 bg-white  rounded-tr-2xl rounded-tl-2xl md:rounded-2xl  p-3 border border-white border-opacity-20"
         >
           <div class="flex items-center justify-center mb-3">
             <h2 class="md:text-2xl font-bold text-black">Dashboard name</h2>
@@ -179,95 +179,14 @@
             </li>
           </ul>\
           </div>
-
-                        <!-- Game Settings versi mobile (masuk container kiri) -->
-              <div
-                v-if="isHost"
-                class="md:hidden mt-4 bg-white  backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-black "
-              >
-                <h3 class="text-xl font-bold text-black mb-4">Game Settings</h3>
-
-                <!-- copy isi setting-mu di sini sama persis -->
-                <div class="space-y-4">
-                  <div>
-                    <label class="text-black text-sm block mb-2">Game kategori</label>
-                    <select
-                      v-model="gameSettings.mode"
-                      class="dropdown-kategori w-full bg-gray-200 border border-white border-opacity-20 rounded-lg px-3 py-2 text-white"
-                    >
-                      <option class="bg-gray-200" value="bahasa">Bahasa</option>
-                      <option class="bg-gray-200" value="pakaian-adat">Pakaian Adat</option>
-                      <option class="bg-gray-200" value="rumah-adat">Rumah Adat</option>
-                      <option class="bg-gray-200" value="semua-kategori">Semua Kategori</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="text-black text-sm block mb-2">Time Limit</label>
-                    <select
-                      v-model="gameSettings.timeLimit"
-                      class="w-full bg-gray-200 border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
-                    >
-                      <option class="bg-gray-200" value="1">1 minutes</option>
-                      <option class="bg-gray-200" value="2">2 minutes</option>
-                      <option class="bg-gray-200" value="3">3 minutes</option>
-                      <option class="bg-gray-200" value="unlimited">No Limit</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label class="text-black text-sm block mb-2">Max Players</label>
-                    <div class="flex items-center">
-                      <button @click="decreaseMaxPlayers" class="w-8 h-8 bg-gray-200 rounded-lg flex items-center justify-center text-black hover:bg-opacity-30">-</button>
-                      <span class="mx-4 text-black font-medium">{{ maxPlayers }}</span>
-                      <button @click="increaseMaxPlayers" class="button-plus w-8 h-8  rounded-lg flex items-center justify-center text-white hover:bg-opacity-30">+</button>
-                    </div>
-                  </div>
-                </div>
-                <!-- Mobile Action Buttons -->
-             
-
-              </div>
-                <div class="md:hidden mt-6 space-y-3">
-                
-                <!-- Jika Host → tampilkan tombol Start Game -->
-                <button
-                  v-if="isHost"
-                  @click="handleStartGame"
-                  :disabled="players.length < 2"
-                  class="button-start w-full py-3 bg-green-500 hover:bg-green-600 
-                        disabled:bg-gray-400 disabled:cursor-not-allowed
-                        text-white rounded-xl font-bold text-lg transition-all duration-200"
-                >
-                  Start Game
-                </button>
-
-                <!-- Jika bukan Host → tampilkan status waiting -->
-                <div
-                  v-else
-                  class="w-full py-3 bg-white bg-opacity-20 text-white text-center rounded-xl"
-                >
-                  Waiting for host to start the game...
-                </div>
-
-                <!-- Tombol Leave Room -->
-                <button
-                  @click="handleLeaveRoom"
-                  class="w-full py-3 bg-red-500 hover:bg-red-600 
-                        text-white rounded-xl font-semibold transition-all duration-200"
-                >
-                  Leave Room
-                </button>
-              </div>
-
-        
+          
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-2 hidden md:block">
+        <div class="space-y-2 ">
           <template v-if="isHost">
             <div
-              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl p-6 mx-4 mb-1 border border-black "
             >
               <h3 class="text-xl font-bold text-black mb-4">Game Settings</h3>
               <div class="space-y-4">
@@ -277,12 +196,12 @@
                   >
                   <select
                     v-model="gameSettings.mode"
-                    class="w-full bg-gray-200 border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
+                    class="dropdown-kategori w-full  border border-black border-opacity-20 rounded-lg px-3 py-2 text-white"
                   >
-                     <option class="bg-gray-200" value="bahasa">Bahasa</option>
-                      <option class="bg-gray-200" value="pakaian-adat">Pakaian Adat</option>
-                      <option class="bg-gray-200" value="rumah-adat">Rumah Adat</option>
-                      <option class="bg-gray-200" value="semua-kategori">Semua Kategori</option>
+                     <option class="dropdown-kategori bg-gray-400 text-white" value="bahasa">Bahasa</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="pakaian-adat">Pakaian Adat</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="rumah-adat">Rumah Adat</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="semua-kategori">Semua Kategori</option>
                   </select>
                 </div>
                 <div>
@@ -350,10 +269,11 @@
               </div>
             </div>
 
+            <div class="mx-4">
             <button
               @click="handleStartGame"
               :disabled="players.length < 2"
-              class="w-full py-4 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105"
+              class="button-start w-full py-3  disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105"
             >
               <span class="flex items-center justify-center">
                 Start Game
@@ -373,10 +293,11 @@
                 </svg>
               </span>
             </button>
+            </div>
 
             <div
               v-if="players.length < 2"
-              class="text-center text-yellow-300 text-sm"
+              class="text-center text-red-500 text-sm"
             >
               At least 2 players are required
             </div>
@@ -384,29 +305,29 @@
 
           <template v-else>
             <div
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl mb-4  p-1 px-4 border border-black mx-4"
             >
-              <h3 class="text-xl font-bold text-white mb-4">Room Info</h3>
-              <div class="space-y-3">
+              <h3 class="text-xl font-bold text-black mb-2">Room Info</h3>
+              <div class="space-y-1">
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Room Code</span>
-                  <span class="text-white font-medium">{{ roomCode }}</span>
+                  <span class="text-black">Room Code</span>
+                  <span class="text-black font-medium">{{ roomCode }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Game Mode</span>
-                  <span class="text-white font-medium">{{
+                  <span class="text-black">Game Mode</span>
+                  <span class="text-black font-medium">{{
                     gameSettings.mode || "Conversation"
                   }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Time Limit</span>
-                  <span class="text-white font-medium">{{
+                  <span class="text-black">Time Limit</span>
+                  <span class="text-black font-medium">{{
                     gameSettings.timeLimit || "Time"
                   }} minutes</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Players</span>
-                  <span class="text-white font-medium"
+                  <span class="text-black">Players</span>
+                  <span class="text-black font-medium"
                     >{{ players.length }}/{{ maxPlayers }}</span
                   >
                 </div>
@@ -414,30 +335,32 @@
             </div>
 
             <div
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl  p-6 mx-4 border border-black "
             >
               <div class="flex flex-col items-center justify-center">
                 <div class="relative mb-4">
                   <div
-                    class="w-16 h-16 border-4 border-white border-opacity-30 rounded-full"
+                    class="w-16 h-16 border-4 border-black rounded-full"
                   ></div>
                   <div
                     class="absolute top-0 left-0 w-16 h-16 border-4 border-t-blue-400 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"
                   ></div>
                 </div>
-                <p class="text-white text-center">
+                <p class="text-black text-center">
                   Waiting for host to start the game...
                 </p>
               </div>
             </div>
           </template>
-
+          
+          <div class="mx-4">
           <button
             @click="handleLeaveRoom"
-            class="w-full py-3 bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
+            class="button-leave w-full py-3 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
           >
             Leave Room
           </button>
+          </div>
         </div>
       </div>
     </div>
@@ -915,10 +838,15 @@ select::-webkit-scrollbar-thumb:hover {
 
 .dropdown-kategori{
   background-color: #201658;
-  color: white;
+  text-decoration-color: white;
 }
 
 .button-start{
   background-color: #201658;
+  
+}
+
+.button-leave{
+  background-color: #FF0000;
 }
 </style>

@@ -1,5 +1,6 @@
 <template>
-   <div class="min-h-screen flex flex-col justify-between bg-gradient-to-b from-red-600 to-white px-6 overflow-hidden relative pb-12">
+   <div class="min-h-screen flex flex-col justify-start px-6 overflow-hidden relative pb-12"
+   style="background: linear-gradient(to bottom, #dc2626 10%, #dc2626 10%, #ffffff 40%, #ffffff 100%);">
     <!-- Animated Background Elements -->
     
 
@@ -18,16 +19,16 @@
 
     <!-- Main Card -->
     <div class="absolute left-0">
-      <img :src="menuicon" alt="" class="h-24 w-24">
+      <img :src="menuicon" alt="" class="h-40 w-40">
     </div>
 
     <!-- Bagian Atas: Gambar -->
-    <div class="w-full flex flex-col justify-center items-center text-center -mt-20 animate-fade-in delay-200">
-      <img :src="frame1" class="w-80 md:w-80 lg:w-96 mb-0" />
-      <img :src="dialogentext" class="w-48 md:w-64 -mt-6 md:-mt-20 md:mb-10" />
+    <div class="w-full flex flex-col justify-center items-center text-center -mt-5 animate-fade-in delay-200">
+      <img :src="frame1" class="w-90 md:w-80 lg:w-96 mb-0" />
+      <img :src="dialogentext" class="w-48 md:w-64 mb-40 -mt-24 md:-mt-20 md:mb-10" />
     </div>
 
-      <div class="w-full max-w-md mx-auto mb-4 animate-slide-up">
+      <div class="w-full max-w-md mx-auto mb-22 animate-slide-up">
 
       <h2 class="text-lg font-medium text-black text-left px-2 mb-1">Username</h2>
       
@@ -38,11 +39,11 @@
             v-model="username" 
             @keyup.enter="goLobby"
             :disabled="isLoading"
-             class="w-full border-2 border-white text-black border-opacity-30 bg-[#EAEAEA] rounded-xl px-4 py-4 pl-12 placeholder-black focus:ring-4 focus:ring-blue-300 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed" 
+             class="w-full border-2 border-black text-black border-opacity-30 bg-[#EAEAEA] rounded-xl px-4 py-4 pl-12 placeholder-gray-500 focus:ring-4 focus:ring-red-300 focus:outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed" 
             placeholder="Username"
           />
           <div class="absolute inset-y-0 left-0 flex items-center pl-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
           </div>

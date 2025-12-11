@@ -1,9 +1,11 @@
 <template>
   <div
     class="min-h-screen flex flex-col items-center justify-between 
-    bg-gradient-to-b from-red-600 to-white 
+    
     px-6 md:px-10 lg:px-20 overflow-hidden relative 
-    animate-fade-in animate-gradient-smooth">
+    animate-fade-in animate-gradient-smooth"
+    style="background: linear-gradient(to bottom, #dc2626 10%, #dc2626 10%, #ffffff 40%, #ffffff 100%);">
+    
 
     <!-- Loading Overlay -->
     <div
@@ -27,39 +29,53 @@
     </div>
 
     <!-- Logo -->
-    <div class="w-full flex flex-col justify-center items-center text-center -mt-20 md:mt-16 lg:-mt-36 animate-fade-in delay-200">
+    <div class="w-full flex flex-col justify-center items-center text-center -mt-0 md:mt-16 lg:-mt-36 animate-fade-in delay-200">
       <img :src="frame" class="w-80 md:w-80 lg:w-96 mb-0" />
       <img :src="dialogentext" class="w-48 md:w-64 -mt-16 md:-mt-20" />
-    </div>
-
-    <!-- TITLE -->
-    <div class="text-center -mt-16 md:mt-6 animate-fade-in delay-300">
-      <h1 class="text-lg md:text-2xl  text-black">
+      
+      <div class="text-center mt-10 md:mt-6 animate-fade-in delay-300">
+      <h1 class="text-xl md:text-2xl  text-black">
         Welcome to <span class="font-bold"> DialoGenQuiz!</span>
       </h1>
-      <p class="text-sm md:text-base text-black opacity-80">
+      <p class="text-lg md:text-base text-black font-medium opacity-80">
         Play, Learn, and Explore Local Languages with Fun!
       </p>
     </div>
+    </div>
+
+    <!-- TITLE -->
+    
 
     <!-- CARD BUTTONS RESPONSIVE -->
-    <div class="flex flex-col gap-4 w-full max-w-md mt-30 mb-20  md:mt-10 animate-fade-in delay-500">
+    <div class="flex flex-col gap-4 w-full max-w-md mt-30 mb-28  md:mt-10 animate-fade-in delay-500">
 
       <!-- Create Room -->
       <button
         @click="goCreate"
         :disabled="isLoading"
-        class="w-full py-4 bg-gray-300 border border-black rounded-2xl 
+        class="button-addroom w-full py-4 hover:bg-gray-300 border border-black rounded-2xl 
         text-lg text-black font-bold
         transition-all duration-300 ease-out hover:scale-[1.02] active:scale-95">
         Add Room
+      </button>
+
+      
+
+      <!-- Join Room Button -->
+      <button
+        @click="toggleJoin"
+        :disabled="isLoading"
+        class="button-join w-full py-4  text-white rounded-2xl 
+        text-lg font-bold transition-all duration-300 ease-out hover:bg-red-500 
+        hover:scale-[1.02] active:scale-95">
+        Join Room
       </button>
 
       <!-- JOIN PANEL -->
       <transition name="smooth-slide">
         <div
           v-if="showJoin"
-          class="px-4 bg-white bg-opacity-10 rounded-2xl backdrop-blur-md animate-fade-in">
+          class="px-4 py-4 bg-gradient-to-b from-red-500 to-white rounded-2xl backdrop-blur-md animate-fade-in">
 
           <div class="relative">
             <input
@@ -87,23 +103,13 @@
           <button
             @click="goJoin"
             :disabled="isLoading"
-            class="w-full mt-2 py-2 bg-green-600 text-white rounded-xl font-bold
+            class="button-join w-full mt-2 py-2  text-white rounded-xl font-bold
             transition-all duration-300 ease-out hover:scale-[1.02] active:scale-95">
             Join Now
           </button>
 
         </div>
       </transition>
-
-      <!-- Join Room Button -->
-      <button
-        @click="toggleJoin"
-        :disabled="isLoading"
-        class="w-full py-4 bg-red-500 text-white rounded-2xl 
-        text-lg font-bold transition-all duration-300 ease-out 
-        hover:scale-[1.02] active:scale-95">
-        Join Room
-      </button>
 
     </div>
 
@@ -217,13 +223,21 @@ const goJoin = () => {
 .smooth-slide-enter-from,
 .smooth-slide-leave-to {
   opacity: 0;
-  transform: translateY(25px);
+  transform: translateY(-25px);
 }
 
 .smooth-slide-enter-to,
 .smooth-slide-leave-from {
   opacity: 1;
   transform: translateY(0);
+}
+
+.button-join{
+  background-color: #FF0000;
+}
+
+.button-addroom{
+  background-color: #EAEAEA;
 }
 
 </style>
