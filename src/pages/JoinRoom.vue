@@ -23,10 +23,35 @@
     </div>
 
     <!-- Bagian Atas: Gambar -->
-    <div class="w-full flex flex-col justify-center items-center text-center -mt-5 animate-fade-in delay-200">
+    <div class="gambar-container w-full flex flex-col justify-center items-center text-center -mt-5 animate-fade-in delay-200">
       <img :src="frame1" class="w-90 md:w-80 lg:w-96 mb-0" />
-      <img :src="dialogentext" class="w-48 md:w-64 mb-40 -mt-24 md:-mt-20 md:mb-10" />
+      <img :src="dialogentext" class=" w-48 md:w-64 mb-0 -mt-24 md:-mt-20 md:mb-10" />
     </div>
+
+     <!-- Room Code Display -->
+<div class="room-container w-full mx-auto max-w-md mb-6  rounded-2xl px-4  py-2 shadow-lg animate-fade-in relative">
+  <button 
+    @click="goBack"
+    class="absolute top-5 right-3 w-10 h-10  bg-opacity-20 hover:bg-opacity-30  flex items-center justify-center transition-all"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+  </button>
+  
+  <div class="flex items-center gap-3">
+    <!-- Icon -->
+    <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center flex-shrink-0">
+      <img :src="cube" alt="">
+    </div>
+    
+    <!-- Text -->
+    <div>
+      <p class="text-white text-md font-medium opacity-80 mb-0.5">Room Code</p>
+      <p class="text-white text-2xl font-bold tracking-wide">{{ room }}</p>
+    </div>
+  </div>
+</div>
 
       <div class="w-full max-w-md mx-auto mb-22 animate-slide-up">
 
@@ -85,6 +110,8 @@ import { useJanusRoom } from '../composable/UseJanusRoom'
 import frame1 from '@/assets/image/Frame.png'
 import dialogentext from '@/assets/image/dialogen.png'
 import menuicon from '@/assets/image/iconmenu.png'
+import cube from '@/assets/image/cube.svg'
+
 
 const router = useRouter()
 const username = ref('')
@@ -246,6 +273,10 @@ const goBack = () => {
   animation: fade-out 0.5s ease-out forwards;
 }
 
+.room-container{
+  background-color: #201658;
+}
+
 /* Glassmorphism effect */
 .backdrop-filter {
   backdrop-filter: blur(10px);
@@ -269,5 +300,9 @@ input::-webkit-scrollbar-thumb {
 
 input::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+.gambar-container{
+  margin-bottom: 60px;
 }
 </style>

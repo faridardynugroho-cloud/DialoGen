@@ -103,8 +103,8 @@
               {{ players.length }}/{{ maxPlayers }}
             </div>
           </div>
-          <div class="max-h-80 md:max-h-full overflow-y-auto pr-2">
-          <ul class="space-y-2">
+          <div class="max-h-85 md:max-h-full overflow-y-auto pr-2">
+          <ul class="space-y-2 mx-2">
             <li
               v-for="player in players"
               :key="player.username"
@@ -173,7 +173,7 @@
             <li
               v-for="n in maxPlayers - players.length"
               :key="'empty-' + n"
-              class="bg-red  border-2 border-dashed border-white border-opacity-20 rounded-xl p-4 flex items-center justify-center"
+              class="bg-red  border-2 border-dashed border-black border-opacity-20 rounded-xl p-4 flex items-center justify-center"
             >
               <p class="text-gray-400">Waiting for player...</p>
             </li>
@@ -186,7 +186,7 @@
         <div class="space-y-2 ">
           <template v-if="isHost">
             <div
-              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl p-6 mx-4 mb-1 border border-black "
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl p-6 mx-4 mb-6 mt-0 border border-black "
             >
               <h3 class="text-xl font-bold text-black mb-4">Game Settings</h3>
               <div class="space-y-4">
@@ -269,7 +269,7 @@
               </div>
             </div>
 
-            <div class="mx-4">
+            <div class="mx-4 ">
             <button
               @click="handleStartGame"
               :disabled="players.length < 2"
@@ -353,10 +353,10 @@
             </div>
           </template>
           
-          <div class="mx-4">
+          <div class="mx-4 mt-2 ">
           <button
             @click="handleLeaveRoom"
-            class="button-leave w-full py-3 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
+            class="button-leave mb-4 mt-2 w-full py-3 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
           >
             Leave Room
           </button>

@@ -37,7 +37,7 @@
       <h1 class="text-xl md:text-2xl  text-black">
         Welcome to <span class="font-bold"> DialoGenQuiz!</span>
       </h1>
-      <p class="text-lg md:text-base text-black font-medium opacity-80">
+      <p class="text-xl md:text-base text-black font-medium opacity-80">
         Play, Learn, and Explore Local Languages with Fun!
       </p>
     </div>
@@ -47,7 +47,7 @@
     
 
     <!-- CARD BUTTONS RESPONSIVE -->
-    <div class="flex flex-col gap-4 w-full max-w-md mt-30 mb-28  md:mt-10 animate-fade-in delay-500">
+    <div class="flex flex-col gap-4 w-full max-w-md mt-0 mb-60  md:mt-10 animate-fade-in delay-500 relative">
 
       <!-- Create Room -->
       <button
@@ -75,7 +75,7 @@
       <transition name="smooth-slide">
         <div
           v-if="showJoin"
-          class="px-4 py-4 bg-gradient-to-b from-red-500 to-white rounded-2xl backdrop-blur-md animate-fade-in">
+            class="absolute top-full left-0 right-0 mt-4 px-4 py-4 bg-gradient-to-b from-red-500 to-white rounded-2xl backdrop-blur-md z-10">
 
           <div class="relative">
             <input
@@ -85,12 +85,12 @@
               placeholder="Masukkan kode room..."
               class="w-full border-2 border-black border-opacity-30 
               bg-white rounded-xl px-4 py-2 text-black
-              placeholder-gray-300 transition-all focus:border-black focus:ring-2 focus:ring-red-400" />
+              placeholder-gray-500 transition-all focus:border-black focus:ring-2 focus:ring-red-400" />
 
             <div class="absolute inset-y-0 right-0 flex items-center pr-3">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="h-6 w-6 text-gray-300"
+                class="h-6 w-6 text-gray-500"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor">

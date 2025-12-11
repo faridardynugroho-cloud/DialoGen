@@ -22,7 +22,7 @@
     <!-- Bagian Atas: Gambar -->
     <div class="w-full flex flex-col justify-center items-center text-center -mt-5 animate-fade-in delay-200">
       <img :src="frame1" class="w-90 md:w-80 lg:w-96 mb-0" />
-      <img :src="dialogentext" class="w-48 md:w-64 mb-40 -mt-24 md:-mt-20 md:mb-10" />
+      <img :src="dialogentext" class="w-48 md:w-64 mb-32 -mt-24 md:-mt-20 md:mb-10" />
     </div>
 
     <!-- Bagian Bawah (Input + Button) -->

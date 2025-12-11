@@ -38,7 +38,7 @@
         class="bg-white rounded-3xl max-w-sm w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
       >
 
-        <div class="bg-gray-50 rounded-2xl p-6 mb-4">
+        <div class="bg-gray-50 rounded-2xl p-6 mb-2">
           <p class="text-black text-sm text-center text-xl mb-2">Current Score</p>
           <p
             class="text-5xl font-bold text-center mb-5"
@@ -52,11 +52,11 @@
         </div>
 
         <div v-if="pointsEarned > 0" class="text-center">
-          <p class="text-green-600 font-bold text-xl mb-2">✓ Correct!</p>
+          <p class="text-green-600 font-bold text-xl mb-6">✓ Correct!</p>
           <p class="text-gray-600 text-sm">Great job! Keep it up!</p>
         </div>
         <div v-else class="text-center">
-          <p class="text-red-600 font-bold text-xl mb-2">✗ Wrong Answer</p>
+          <p class="text-red-600 font-bold text-xl mb-6">✗ Wrong Answer</p>
           <p class="text-gray-600 text-sm">Better luck next time!</p>
         </div>
       </div>
@@ -69,55 +69,46 @@
       class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
     >
       <div
-        class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl p-8 max-w-2xl w-full mx-4 border border-white border-opacity-20 animate-slide-up"
+        class="bg-red-500 backdrop-filter backdrop-blur-lg rounded-3xl p-6 max-w-2xl w-full mx-4 border border-white border-opacity-20 animate-slide-up"
       >
         <h2 class="text-3xl font-bold text-white text-center mb-6">
-          🏆 Current Scores
+          Current Scores
         </h2>
+        
 
-        <div class="space-y-3 mb-8 relative" style="min-height: 400px">
-          <TransitionGroup name="list" tag="div">
+        <div class="space-y-3 mb-8 relative max-w-sm" style="min-height: 80vh; min-width: 90vw;">
+          <img
+    :src="imagebackground"
+    class="absolute top-0 w-full object-contain z-0"
+  />
+          <TransitionGroup name="list" tag="div" class="z-10">
             <div
               v-for="(player, index) in sortedPlayers"
               :key="player.username"
-              class="bg-white bg-opacity-10 rounded-xl p-4 flex items-center justify-between transition-all duration-500 absolute w-full"
+              class="bg-white text-black rounded-xl py-2 p-4 flex items-center justify-between transition-all duration-500 absolute w-full"
               :style="{ top: `${index * 72}px` }"
-              :class="{
-                'ring-2 ring-yellow-400 scale-105': index === 0,
-                'ring-1 ring-gray-400': index === 1,
-                'ring-1 ring-orange-400': index === 2,
-              }"
+              
             >
               <div class="flex items-center">
+               <div
+                class="flex items-center justify-center 
+                      w-8 h-8 rounded-full border border-gray-500
+                      bg-white text-black font-bold text-md mr-4"
+              >
+                {{ index + 1 }}
+              </div>
+
                 <div
-                  class="text-2xl font-bold mr-4 w-8"
-                  :class="{
-                    'text-yellow-400': index === 0,
-                    'text-gray-300': index === 1,
-                    'text-orange-400': index === 2,
-                    'text-white': index > 2,
-                  }"
+                  class="w-12 h-12 rounded-full flex items-center justify-center mr-3"
+                  :style="{ backgroundColor: randomColor() }"
                 >
-                  {{
-                    index === 0
-                      ? "🥇"
-                      : index === 1
-                      ? "🥈"
-                      : index === 2
-                      ? "🥉"
-                      : index + 1
-                  }}
-                </div>
-                <div
-                  class="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full flex items-center justify-center mr-3"
-                >
-                  <span class="text-white font-bold">{{
-                    player.username.charAt(0).toUpperCase()
-                  }}</span>
+                  <span class="text-black font-bold">
+                    {{ player.username.charAt(0).toUpperCase() }}
+                  </span>
                 </div>
                 <div>
-                  <p class="text-white font-medium">{{ player.username }}</p>
-                  <p class="text-gray-300 text-sm">{{ player.score }} points</p>
+                  <p class="text-black font-medium">{{ player.username }}</p>
+                  <p class="text-gray-500 text-sm">{{ player.score }} points</p>
                 </div>
               </div>
               <div v-if="player.lastChange" class="flex items-center">
@@ -307,6 +298,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useJanusRoom } from "@/composable/UseJanusRoom";
+import imagebackground from "@/assets/image/Frame.png";
 import {
   useDeepSeekQuiz as useGeminiQuiz,
   type QuizQuestion,
@@ -370,6 +362,15 @@ const quizReadyForTimer = ref(false);
 const showPointsPopup = ref(false);
 const pointsEarned = ref(0);
 const correctAnswersCount = ref(0);
+
+const randomColor = () => {
+  const colors = [
+    "#FFB4B4", "#FFD37A", "#B4FF9F", "#9FD6FF",
+    "#C9A7FF", "#FF9FE5", "#FFC48C", "#9FFFCB"
+  ];
+  return colors[Math.floor(Math.random() * colors.length)];
+};
+
 
 const quizData = ref<QuizQuestion>({
   question: "",
