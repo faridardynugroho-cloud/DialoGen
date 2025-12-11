@@ -41,7 +41,7 @@
           </div>
           <div class="text-left">
             
-            <p class="text-gray-300 text-sm">Room Code</p>
+            <p class="text-white text-sm">Room Code</p>
             <p class="text-md font-bold text-white">{{ roomCode }}</p>
           </div>
 
