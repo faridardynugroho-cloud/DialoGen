@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen p-0"
+    class="min-h-screen p-0 overflow-y-auto"
     style="
       background: linear-gradient(
         to bottom,
@@ -64,13 +64,13 @@
       </div>
 
       <div
-        class="bg-red-500 absolute left-3 right-3 top-80 bottom-80 rounded-3xl p-6 flex-col flex items-center justify-center shadow-lg"
+        class="bg-red-500 w-full rounded-3xl p-6 flex-col flex items-center justify-center shadow-lg"
         :class="
           pointsEarned > 0 ? 'animate-bounce-celebration' : 'animate-shake'
         "
       >
         <div
-          class="bg-white rounded-3xl max-w-sm w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
+          class="bg-white rounded-3xl mx-4 w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
         >
           <div class="bg-gray-50 rounded-2xl p-6 mb-4">
             <p class="text-black text-center text-xl mb-2">Current Score</p>
@@ -109,29 +109,29 @@
     <!-- Scoreboard Transition -->
     <div
       v-if="showScoreboard"
-      class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+      class="fixed inset-0 w-full bg-black bg-opacity-80 flex items-center justify-center z-50"
     >
       <div
-        class="bg-red-500 backdrop-filter backdrop-blur-lg rounded-3xl p-6 max-w-2xl w-full mx-4 border border-white border-opacity-20 animate-slide-up"
+        class="bg-red-500 backdrop-filter backdrop-blur-lg rounded-3xl mx-auto h-full p-6 w-full mx-0 border border-white border-opacity-20 animate-slide-up"
       >
         <h2 class="text-3xl font-bold text-white text-center mb-6">
           Current Scores
         </h2>
 
         <div
-          class="space-y-3 mb-8 relative max-w-sm"
-          style="min-height: 80vh; min-width: 90vw"
+          class="space-y-3 mb-8 relative max-w-full"
+          style="min-height: 70vh; min-width: 80vw"
         >
           <TransitionGroup name="list" tag="div" class="z-10">
             <div
               v-for="(player, index) in sortedPlayers"
               :key="player.username"
-              class="bg-white text-black rounded-xl py-2 p-4 flex items-center justify-between transition-all duration-500 absolute w-full"
+              class="w-full bg-white text-black rounded-xl py-2 p-4 my-2 flex items-center justify-between transition-all duration-500  "
               :style="{ top: `${index * 72}px` }"
             >
               <div class="flex items-center">
                 <div
-                  class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-500 bg-white text-black font-bold text-md mr-4"
+                  class="flex items-center mx-auto justify-center w-8 h-8 rounded-full border border-gray-500 bg-white text-black font-bold text-md mr-0"
                 >
                   {{ index + 1 }}
                 </div>
@@ -305,7 +305,7 @@
       </div>
 
       <!-- Answer Options -->
-      <div class="grid grid-cols-1 gap-8 mt-20">
+      <div class="grid grid-cols-1 gap-8 mt-20 mb-10">
         <button
           v-for="(option, index) in quizData.options"
           :key="index"

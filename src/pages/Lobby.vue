@@ -44,9 +44,12 @@
         >
           <div
             class="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center mr-3"
-          ></div>
+          >
+            <img :src="cube" alt="">
+          </div>
           <div class="text-left">
-            <p class="text-gray-300 text-sm">Room Code</p>
+            
+            <p class="text-white text-sm">Room Code</p>
             <p class="text-md font-bold text-white">{{ roomCode }}</p>
           </div>
 
@@ -376,6 +379,7 @@
 import { ref, onMounted, watch, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useJanusRoom } from "@/composable/UseJanusRoom";
+import cube from '@/assets/image/cube.svg'
 
 const router = useRouter();
 const showCopyNotification = ref(false);
