@@ -1,6 +1,7 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6"
+   class="min-h-screen p-0 md:p-6"
+  style="background: linear-gradient(to bottom, #FF0000 2%, #FF0000 2%, #ffffff 20%, #ffffff 100%);"
   >
     <!-- Loading Overlay -->
     <div
@@ -24,36 +25,24 @@
       <button @click="error = null" class="ml-4 text-white font-bold">×</button>
     </div>
 
-    <div class="relative z-10 max-w-4xl mx-auto">
+    <div class="relative z-10 max-w-4xl mx-auto ">
       <!-- Header with Room Code -->
-      <div class="text-center mb-8">
-        <h1 class="text-4xl font-bold text-white mb-4">
+      <div class="flex items-center justify-between text-center  mb-2 px-4">
+        <h1 class="text-xl font-bold text-white mb-0">
           {{ isHost ? "Host Lobby" : "Lobby" }}
         </h1>
         <div
-          class="inline-flex items-center bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
+          class="inline-flex items-center  backdrop-filter backdrop-blur-lg rounded-xl px-0 py-3 "
         >
           <div
-            class="w-10 h-10 bg-gradient-to-br from-green-400 to-teal-300 rounded-full flex items-center justify-center mr-3"
+            class="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center mr-3"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 text-white"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"
-              />
-            </svg>
+            <img :src="cube" alt="">
           </div>
           <div class="text-left">
+            
             <p class="text-gray-300 text-sm">Room Code</p>
-            <p class="text-2xl font-bold text-white">{{ roomCode }}</p>
+            <p class="text-md font-bold text-white">{{ roomCode }}</p>
           </div>
 
           <button
@@ -77,37 +66,35 @@
             </svg>
           </button>
         </div>
-        <div v-if="showCopyNotification" class="mt-2 text-green-400 text-sm">
-          Room code copied!
-        </div>
+        
       </div>
 
-      <div class="grid md:grid-cols-3 gap-6">
+      <div class="grid md:grid-cols-3 gap-0 md:gap-6">
         <!-- Players List -->
         <div
-          class="md:col-span-2 bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+          class="md:col-span-2 bg-white  rounded-tr-2xl rounded-tl-2xl md:rounded-2xl  p-3 border border-white border-opacity-20"
         >
-          <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-bold text-white">Players</h2>
+          <div class="flex items-center justify-center mb-3">
+            <h2 class="md:text-2xl font-bold text-black">Dashboard name</h2>
             <div
-              class="bg-white bg-opacity-20 rounded-full px-3 py-1 text-white text-sm"
+              class="bg-red rounded-full px-0 py-0 balck text-sm"
             >
               {{ players.length }}/{{ maxPlayers }}
             </div>
           </div>
-
-          <ul class="space-y-3">
+          <div class=" md:max-h-full overflow-y-auto pr-2" style="max-height: 38vh;">
+          <ul class="space-y-2 mx-2">
             <li
               v-for="player in players"
               :key="player.username"
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur rounded-xl p-4 flex items-center justify-between"
+              class="button-leave  rounded-xl p-2 flex items-center justify-between"
             >
               <div class="flex items-center">
                 <div class="relative mr-4">
                   <div
-                    class="w-12 h-12 bg-gradient-to-br from-blue-400 to-cyan-300 rounded-full flex items-center justify-center shadow-md"
+                    class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shadow-md"
                   >
-                    <span class="text-white font-bold">{{
+                    <span class="text-black font-bold">{{
                       player.username.charAt(0).toUpperCase()
                     }}</span>
                   </div>
@@ -148,7 +135,7 @@
                 </div>
                 <div>
                   <p class="text-white font-medium">{{ player.username }}</p>
-                  <p class="text-gray-300 text-sm">
+                  <p class="text-white text-sm">
                     {{ player.isHost ? "Host" : "Player" }}
                   </p>
                 </div>
@@ -157,64 +144,67 @@
                 <div
                   class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"
                 ></div>
-                <span class="text-green-400 text-sm">Online</span>
+                <span class="text-white text-sm">Online</span>
               </div>
             </li>
+            
 
             <li
               v-for="n in maxPlayers - players.length"
               :key="'empty-' + n"
-              class="bg-white bg-opacity-5 border-2 border-dashed border-white border-opacity-20 rounded-xl p-4 flex items-center justify-center"
+              class="bg-red  border-2 border-dashed border-black border-opacity-20 rounded-xl p-4 flex items-center justify-center"
             >
               <p class="text-gray-400">Waiting for player...</p>
             </li>
-          </ul>
+          </ul>\
+          </div>
+          
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-6">
+        <div class="space-y-2 ">
           <template v-if="isHost">
             <div
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl p-6 mx-4 mb-6 mt-0 border border-black "
             >
-              <h3 class="text-xl font-bold text-white mb-4">Game Settings</h3>
+              <h3 class="text-xl font-bold text-black mb-4">Game Settings</h3>
               <div class="space-y-4">
                 <div>
-                  <label class="text-gray-300 text-sm block mb-2"
+                  <label class="text-black text-sm block mb-2"
                     >Game kategori</label
                   >
                   <select
                     v-model="gameSettings.mode"
-                    class="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg px-3 py-2 text-white"
+                    class="dropdown-kategori w-full  border border-black border-opacity-20 rounded-lg px-3 py-2 text-white"
                   >
-                    <option value="Bahasa">Bahasa</option>
-                    <option value="Pakaian Adat">Pakaian Adat</option>
-                    <option value="Rumah Adat">Rumah Adat</option>
-                    <option value="Semua  Kategori">Semua Kategori</option>
+                     <option class="dropdown-kategori bg-gray-400 text-white" value="Bahasa">Bahasa</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="Pakaian Adat">Pakaian Adat</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="Rumah Adat">Rumah Adat</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="Semua Kategori">Semua Kategori</option>
                   </select>
                 </div>
                 <div>
-                  <label class="text-gray-300 text-sm block mb-2"
+                  <label class="text-black text-sm block mb-2"
                     >Time Limit</label
                   >
                   <select
                     v-model="gameSettings.timeLimit"
-                    class="w-full bg-white bg-opacity-10 border border-white border-opacity-20 rounded-lg px-3 py-2 text-white"
+                    class="w-full  bg-gray-200  border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
                   >
-                    <option value="1">1 minutes</option>
-                    <option value="2">2 minutes</option>
-                    <option value="3">3 minutes</option>
-                    <option value="unlimited">No Limit</option>
+                     <option class="bg-gray-200" value="1">1 minutes</option>
+                      <option class="bg-gray-200" value="2">2 minutes</option>
+                      <option class="bg-gray-200" value="3">3 minutes</option>
+                      <option class="bg-gray-200" value="unlimited">No Limit</option>
                   </select>
                 </div>
                 <div>
-                  <label class="text-gray-300 text-sm block mb-2"
+                  <label class="text-black text-sm block mb-2"
                     >Max Players</label
                   >
                   <div class="flex items-center">
                     <button
                       @click="decreaseMaxPlayers"
-                      class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
+                      class="w-8 h-8 bg-gray-400 bg-opacity-20 rounded-lg flex items-center justify-center text-black hover:bg-opacity-30"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -231,12 +221,12 @@
                         />
                       </svg>
                     </button>
-                    <span class="mx-4 text-white font-medium">{{
+                    <span class="mx-4 text-black font-medium">{{
                       maxPlayers
                     }}</span>
                     <button
                       @click="increaseMaxPlayers"
-                      class="w-8 h-8 bg-white bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
+                      class="button-plus w-8 h-8  bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -258,10 +248,11 @@
               </div>
             </div>
 
+            <div class="mx-4 ">
             <button
               @click="handleStartGame"
               :disabled="players.length < 2"
-              class="w-full py-4 bg-gradient-to-r from-green-500 to-teal-500 hover:from-green-600 hover:to-teal-600 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105"
+              class="button-start w-full py-3  disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105"
             >
               <span class="flex items-center justify-center">
                 Start Game
@@ -281,10 +272,11 @@
                 </svg>
               </span>
             </button>
+            </div>
 
             <div
               v-if="players.length < 2"
-              class="text-center text-yellow-300 text-sm"
+              class="text-center text-red-500 text-sm"
             >
               At least 2 players are required
             </div>
@@ -292,29 +284,29 @@
 
           <template v-else>
             <div
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl mb-4  p-1 px-4 border border-black mx-4"
             >
-              <h3 class="text-xl font-bold text-white mb-4">Room Info</h3>
-              <div class="space-y-3">
+              <h3 class="text-xl font-bold text-black mb-2">Room Info</h3>
+              <div class="space-y-1">
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Room Code</span>
-                  <span class="text-white font-medium">{{ roomCode }}</span>
+                  <span class="text-black">Room Code</span>
+                  <span class="text-black font-medium">{{ roomCode }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Game Mode</span>
-                  <span class="text-white font-medium">{{
+                  <span class="text-black">Game Mode</span>
+                  <span class="text-black font-medium">{{
                     gameSettings.mode || "Conversation"
                   }}</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Time Limit</span>
-                  <span class="text-white font-medium">{{
+                  <span class="text-black">Time Limit</span>
+                  <span class="text-black font-medium">{{
                     gameSettings.timeLimit || "Time"
                   }} minutes</span>
                 </div>
                 <div class="flex justify-between">
-                  <span class="text-gray-300">Players</span>
-                  <span class="text-white font-medium"
+                  <span class="text-black">Players</span>
+                  <span class="text-black font-medium"
                     >{{ players.length }}/{{ maxPlayers }}</span
                   >
                 </div>
@@ -322,30 +314,32 @@
             </div>
 
             <div
-              class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl shadow-xl p-6 border border-white border-opacity-20"
+              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl  p-6 mx-4 border border-black "
             >
               <div class="flex flex-col items-center justify-center">
                 <div class="relative mb-4">
                   <div
-                    class="w-16 h-16 border-4 border-white border-opacity-30 rounded-full"
+                    class="w-16 h-16 border-4 border-black rounded-full"
                   ></div>
                   <div
                     class="absolute top-0 left-0 w-16 h-16 border-4 border-t-blue-400 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"
                   ></div>
                 </div>
-                <p class="text-white text-center">
+                <p class="text-black text-center">
                   Waiting for host to start the game...
                 </p>
               </div>
             </div>
           </template>
-
+          
+          <div class="mx-4 mt-2 ">
           <button
             @click="handleLeaveRoom"
-            class="w-full py-3 bg-red-500 bg-opacity-80 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
+            class="button-leave mb-4 mt-2 w-full py-3 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
           >
             Leave Room
           </button>
+          </div>
         </div>
       </div>
     </div>
@@ -356,6 +350,7 @@
 import { ref, onMounted, watch, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useJanusRoom } from "@/composable/UseJanusRoom";
+import cube from '@/assets/image/cube.svg'
 
 const router = useRouter();
 const showCopyNotification = ref(false);
@@ -815,5 +810,23 @@ select::-webkit-scrollbar-thumb {
 
 select::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
+}
+
+.button-plus{
+  background-color: #201658;
+}
+
+.dropdown-kategori{
+  background-color: #201658;
+  text-decoration-color: white;
+}
+
+.button-start{
+  background-color: #201658;
+  
+}
+
+.button-leave{
+  background-color: #FF0000;
 }
 </style>

@@ -6,12 +6,18 @@ import CreateRoom from "../pages/CreateRoom.vue";
 import JoinRoom from "../pages/JoinRoom.vue";
 import Lobby from "../pages/Lobby.vue";
 import Game from "../pages/GamePage.vue";
+import FinalScore from "../pages/finalscore.vue";
 
 const routes = [
   {
     path: "/",
     name: "home",
     component: Home,
+  },
+  {
+    path: "/gamestart",
+    name: "gamestart",
+    component: Game,
   },
   {
     path: "/create-room",
@@ -76,6 +82,12 @@ const routes = [
     },
   },
   {
+    path: "/finalscore",
+    name: "FinalScore",
+    component: FinalScore,
+  },
+
+  {
     // Catch all 404
     path: "/:pathMatch(.*)*",
     name: "not-found",
@@ -97,9 +109,9 @@ router.beforeEach((to, from, next) => {
     roomCode: localStorage.getItem("roomCode"),
     isHost: localStorage.getItem("isHost"),
     gameStarted: localStorage.getItem("gameStarted"),
-    gameSettings: localStorage.getItem("gameSettings")
+    gameSettings: localStorage.getItem("gameSettings"),
   });
-  console.log("=".repeat(60))
+  console.log("=".repeat(60));
   next();
 });
 
