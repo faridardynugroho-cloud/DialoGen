@@ -38,8 +38,8 @@
         class="bg-white rounded-3xl max-w-sm w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
       >
 
-        <div class="bg-gray-50 rounded-2xl p-6 mb-2">
-          <p class="text-black text-sm text-center text-xl mb-2">Current Score</p>
+        <div class="bg-gray-50 rounded-2xl p-6 mb-4">
+          <p class="text-black text-center text-xl mb-2">Current Score</p>
           <p
             class="text-5xl font-bold text-center mb-5"
             :class="pointsEarned > 0 ? 'text-green-500' : 'text-red-500'"
@@ -647,12 +647,28 @@ function handleTimeUp() {
     setTimeout(() => {
       showPointsPopup.value = false;
 
-      // ✅ Host broadcast scoreboard
-      if (IS_HOST) {
-        console.log("[Host] 📊 Broadcasting show_scoreboard");
-        broadcastMessage("show_scoreboard");
-        showScoreboard.value = true;
-        startScoreboardCountdown();
+      // ✅ Cek apakah sudah soal terakhir (question 10)
+      if (currentQuestion.value >= 10) {
+        // ✅ Save final scores ke localStorage
+        localStorage.setItem('finalScores', JSON.stringify(playerScores.value));
+        
+        if (IS_HOST) {
+          console.log("[Host] 🏁 Game finished, redirecting to final score...");
+          broadcastMessage("game_over");
+        }
+        
+        // ✅ Redirect ke final score page
+        setTimeout(() => {
+          router.push('/finalscore');
+        }, 500);
+      } else {
+        // ✅ Lanjut ke scoreboard (soal belum selesai)
+        if (IS_HOST) {
+          console.log("[Host] 📊 Broadcasting show_scoreboard");
+          broadcastMessage("show_scoreboard");
+          showScoreboard.value = true;
+          startScoreboardCountdown();
+        }
       }
     }, 3000);
   }, 3000);
