@@ -179,7 +179,7 @@
           </button>
           <button
             @click="handleLeaveRoom"
-            class="flex-1 py-4 bgred hover:bg-red-600 text-white rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg"
+            class="flex-1 py-4 bgblue hover:bg-red-600 text-white rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg"
           >
             Leave Room
           </button>
@@ -588,5 +588,8 @@ onMounted(() => {
   width: 10px;
   height: 10px;
   animation: confetti-fall 3s linear infinite;
+}
+.bgblue {
+  background-color: #201658;
 }
 </style>

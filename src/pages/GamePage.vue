@@ -52,11 +52,11 @@
         </div>
 
         <div v-if="pointsEarned > 0" class="text-center">
-          <p class="text-green-600 font-bold text-xl mb-6">✓ Correct!</p>
+          <p class="text-green-600 font-bold text-xl mb-2">✓ Correct!</p>
           <p class="text-gray-600 text-sm">Great job! Keep it up!</p>
         </div>
         <div v-else class="text-center">
-          <p class="text-red-600 font-bold text-xl mb-6">✗ Wrong Answer</p>
+          <p class="text-red-600 font-bold text-xl mb-2">✗ Wrong Answer</p>
           <p class="text-gray-600 text-sm">Better luck next time!</p>
         </div>
       </div>

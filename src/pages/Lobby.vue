@@ -1,7 +1,7 @@
 <template>
   <div
    class="min-h-screen p-0 md:p-6"
-  style="background: linear-gradient(to bottom, #dc2626 2%, #dc2626 2%, #ffffff 20%, #ffffff 100%);"
+  style="background: linear-gradient(to bottom, #FF0000 2%, #FF0000 2%, #ffffff 20%, #ffffff 100%);"
   >
     <!-- Loading Overlay -->
     <div
@@ -24,26 +24,6 @@
       {{ error }}
       <button @click="error = null" class="ml-4 text-white font-bold">×</button>
     </div>
-
-    <!-- 🔍 DEBUG PANEL - TOP RIGHT -->
-    <!-- <div class="fixed top-5 left-5 bg-black bg-opacity-80 text-white p-4 rounded-lg text-xs max-w-md z-40 max-h-96 overflow-y-auto">
-      <div class="font-bold mb-2">🔍 Debug Panel</div>
-      <div class="space-y-1">
-        <div>Room: {{ roomCode }}</div>
-        <div>User: {{ username }} ({{ isHost ? 'HOST' : 'GUEST' }})</div>
-        <div>Players: {{ players.length }}</div>
-        <div>Messages: {{ messages.length }}</div>
-        <div>Redirecting: {{ isRedirecting }}</div>
-        <hr class="my-2 border-gray-600">
-        <div class="font-bold">Last 3 Messages:</div>
-        <div v-for="(msg, idx) in messages.slice(-3)" :key="idx" class="pl-2 border-l-2 border-blue-500 mb-2">
-          <div>Type: {{ msg.type }}</div>
-          <div>Sender: {{ msg.sender }}</div>
-          <div class="truncate">Message: {{ msg.message }}</div>
-          <div v-if="msg.data">Data: {{ JSON.stringify(msg.data) }}</div>
-        </div>
-      </div>
-    </div> -->
 
     <div class="relative z-10 max-w-4xl mx-auto ">
       <!-- Header with Room Code -->
@@ -85,9 +65,7 @@
             </svg>
           </button>
         </div>
-        <!-- <div v-if="showCopyNotification" class="mt-2 text-green-400 text-sm">
-          Room code copied!
-        </div> -->
+        
       </div>
 
       <div class="grid md:grid-cols-3 gap-0 md:gap-6">
@@ -103,12 +81,12 @@
               {{ players.length }}/{{ maxPlayers }}
             </div>
           </div>
-          <div class="max-h-85 md:max-h-full overflow-y-auto pr-2">
+          <div class=" md:max-h-full overflow-y-auto pr-2" style="max-height: 38vh;">
           <ul class="space-y-2 mx-2">
             <li
               v-for="player in players"
               :key="player.username"
-              class="bg-red-500  rounded-xl p-2 flex items-center justify-between"
+              class="button-leave  rounded-xl p-2 flex items-center justify-between"
             >
               <div class="flex items-center">
                 <div class="relative mr-4">
@@ -198,10 +176,10 @@
                     v-model="gameSettings.mode"
                     class="dropdown-kategori w-full  border border-black border-opacity-20 rounded-lg px-3 py-2 text-white"
                   >
-                     <option class="dropdown-kategori bg-gray-400 text-white" value="bahasa">Bahasa</option>
-                      <option class="dropdown-kategori bg-gray-400 text-white" value="pakaian-adat">Pakaian Adat</option>
-                      <option class="dropdown-kategori bg-gray-400 text-white" value="rumah-adat">Rumah Adat</option>
-                      <option class="dropdown-kategori bg-gray-400 text-white" value="semua-kategori">Semua Kategori</option>
+                     <option class="dropdown-kategori bg-gray-400 text-white" value="Bahasa">Bahasa</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="Pakaian Adat">Pakaian Adat</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="Rumah Adat">Rumah Adat</option>
+                      <option class="dropdown-kategori bg-gray-400 text-white" value="Semua Kategori">Semua Kategori</option>
                   </select>
                 </div>
                 <div>

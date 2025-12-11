@@ -29,7 +29,7 @@
     </div>
 
      <!-- Room Code Display -->
-<div class="room-container w-full mx-auto max-w-md mb-6  rounded-2xl px-4  py-2 shadow-lg animate-fade-in relative">
+<div class="room-container shdw w-full mx-auto max-w-md mb-6 backdrop-filter backdrop-blur-lg  rounded-2xl px-4  py-2 shadow-lg animate-slide-up animation-delay-1000 relative">
   <button 
     @click="goBack"
     class="absolute top-5 right-3 w-10 h-10  bg-opacity-20 hover:bg-opacity-30  flex items-center justify-center transition-all"
@@ -48,7 +48,7 @@
     <!-- Text -->
     <div>
       <p class="text-white text-md font-medium opacity-80 mb-0.5">Room Code</p>
-      <p class="text-white text-2xl font-bold tracking-wide">{{ room }}</p>
+      <p class="text-white text-xl font-bold tracking-wide">{{ room }}</p>
     </div>
   </div>
 </div>
@@ -74,7 +74,7 @@
           </div>
         </div>
         <div class="mt-2 flex justify-between items-center">
-         
+          <p class="text-xs text-gray-800 opacity-70 ml-1">Username akan ditampilkan kepada peserta lain</p>
           <div v-if="username" class="flex items-center text-green-400 text-xs">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -88,7 +88,7 @@
       <button 
         @click="goLobby" 
         :disabled="!username.trim() || isLoading"
-       class="w-full py-4 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50 relative overflow-hidden group"
+       class="w-full py-4 bgred hover:bgred:hover mt-5 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50 relative overflow-hidden group"
       >
         <span class="relative z-10 flex items-center justify-center">
           Join Room
@@ -98,6 +98,32 @@
         </span>
         <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
       </button>
+
+      <!-- Tips -->
+      <div
+        class="max-w-md bg-white mt-5 bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-2xl p-4 border border-black border-opacity-30 z-10 animate-fade-in animation-delay-1000"
+      >
+        <div class="flex items-start">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="h-5 w-5 text-yellow-300 mr-2 mt-0.5 flex-shrink-0"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <p class="text-xs text-gray-600">
+            Pilih username yang mudah diingat dan unik. Username akan digunakan
+            untuk identifikasi Anda dalam sesi quiz.
+          </p>
+        </div>
+      </div>
   
     </div>
   </div>
@@ -304,5 +330,14 @@ input::-webkit-scrollbar-thumb:hover {
 
 .gambar-container{
   margin-bottom: 60px;
+}
+.bgred {
+  background-color: #FF0000;
+}
+.bgred:hover {
+  background-color: #FF0005;
+}
+.shdw{
+  box-shadow: 0 5px 3px rgba(0, 0, 0, 0.5);
 }
 </style>
