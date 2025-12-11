@@ -14,6 +14,11 @@ const routes = [
     component: Home,
   },
   {
+    path: "/gamestart",
+    name: "gamestart",
+    component: Game,
+  },
+  {
     path: "/create-room",
     name: "create-room",
     component: CreateRoom,
@@ -75,6 +80,7 @@ const routes = [
       }
     },
   },
+
   {
     // Catch all 404
     path: "/:pathMatch(.*)*",

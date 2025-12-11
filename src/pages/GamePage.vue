@@ -1,6 +1,15 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-800 p-6"
+    class="min-h-screen p-0"
+    style="
+      background: linear-gradient(
+        to bottom,
+        #ef4444 10%,
+        #ef4444 10%,
+        #f3f4f6 40%,
+        #f3f4f6 100%
+      );
+    "
   >
     <!-- Loading Overlay -->
     <div
@@ -16,6 +25,41 @@
         <p class="text-white text-lg">
           {{ IS_HOST ? "Generating question..." : "Waiting for host..." }}
         </p>
+      </div>
+    </div>
+
+    <!-- Pop Up Correct Answer -->
+    <div
+      v-if="showPointsPopup"
+      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 animate-fade-in"
+    >
+    <div class="bg-red-500 absolute left-3 right-3 top-80 bottom-80 rounded-3xl p-6 flex-col flex items-center justify-center shadow-lg">
+      <div
+        class="bg-white rounded-3xl max-w-sm w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
+      >
+
+        <div class="bg-gray-50 rounded-2xl p-6 mb-4">
+          <p class="text-black text-sm text-center text-xl mb-2">Current Score</p>
+          <p
+            class="text-5xl font-bold text-center mb-5"
+            :class="pointsEarned > 0 ? 'text-green-500' : 'text-red-500'"
+          >
+            {{ pointsEarned > 0 ? "+" : "" }}{{ pointsEarned }} pts
+          </p>
+          <p class="text-gray-500 text-xm text-center">
+            Correct: {{ correctAnswersCount }} / {{ currentQuestion }}
+          </p>
+        </div>
+
+        <div v-if="pointsEarned > 0" class="text-center">
+          <p class="text-green-600 font-bold text-xl mb-2">✓ Correct!</p>
+          <p class="text-gray-600 text-sm">Great job! Keep it up!</p>
+        </div>
+        <div v-else class="text-center">
+          <p class="text-red-600 font-bold text-xl mb-2">✗ Wrong Answer</p>
+          <p class="text-gray-600 text-sm">Better luck next time!</p>
+        </div>
+      </div>
       </div>
     </div>
 
@@ -182,70 +226,65 @@
     <!-- Main Game UI -->
     <div
       v-if="!showScoreboard && !showFinalResults"
-      class="relative z-10 max-w-4xl mx-auto"
+      class="relative z-10 max-w-md mx-auto pt-6 px-4"
     >
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-8">
-        <div
-          class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
-        >
-          <p class="text-gray-300 text-sm">Question</p>
-          <p class="text-2xl font-bold text-white">
-            {{ currentQuestion }} / 10
-          </p>
-        </div>
-
-        <div
-          class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
-        >
-          <p class="text-gray-300 text-sm">Time</p>
-          <p
-            class="text-2xl font-bold"
-            :class="timeLeft <= 5 ? 'text-red-400 animate-pulse' : 'text-white'"
-          >
-            {{ timeLeft }}s
-          </p>
-        </div>
-
-        <div
-          class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-xl px-6 py-3 border border-white border-opacity-20"
-        >
-          <p class="text-gray-300 text-sm">Your Score</p>
-          <p class="text-2xl font-bold text-yellow-400">{{ myScore }}</p>
-        </div>
-      </div>
-
       <!-- Question Card -->
       <div
-        class="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg rounded-3xl p-8 mb-6 border border-white border-opacity-20"
+        class="bg-indigo-900 rounded-3xl mt-10 p-6 relative shadow-2xl border-4 border-white"
+        style="min-height: 300px; display: flex; flex-direction: column"
       >
-        <div class="mb-6">
-          <p class="text-gray-300 text-sm mb-2">Terjemahkan kalimat berikut:</p>
-          <h2 class="text-4xl font-bold text-white mb-4">
-            {{ quizData.question }}
+        <!-- Score Display -->
+        <div class="text-center mb-4">
+          <p class="text-white text-sm font-medium mb-1">Your Score</p>
+          <p class="text-white text-3xl font-bold">{{ myScore }}</p>
+        </div>
+        <!-- White Question Box -->
+        <div
+          class="bg-white absolute -bottom-10 left-3 right-3 rounded-3xl p-6 flex-col flex items-center justify-center shadow-lg"
+        >
+          <!-- Timer Badge -->
+          <div
+            class="absolute -top-6 left-1/2 transform -translate-x-1/2 w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-lg z-10 border-8 border-red-500"
+          >
+            <p
+              class="text-2xl font-bold text-black"
+              :class="timeLeft <= 5 ? 'animate-pulse text-red-500' : ''"
+            >
+              {{ timeLeft }}
+            </p>
+          </div>
+          <!-- Question Info -->
+          <div class="text-center mt-8 mb-4">
+            <p class="text-red-500 text-lg font-bold mb-1">
+              Question {{ currentQuestion }} of 10
+            </p>
+            <p class="text-gray-400 text-xm">
+              Soal dalam bahasa {{ quizData.region }}
+            </p>
+          </div>
+          <h2
+            class="text-gray-900 text-2xl font-bold text-center leading-relaxed"
+          >
+            {{ quizData.question || "Loading question..." }}
           </h2>
-
-          <p class="text-gray-300 text-sm">
-            Pilih arti yang benar dalam Bahasa Indonesia
-          </p>
         </div>
       </div>
 
       <!-- Answer Options -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div class="grid grid-cols-1 gap-8 mt-20">
         <button
           v-for="(option, index) in quizData.options"
           :key="index"
           @click="selectAnswer(index)"
           :disabled="timeLeft === 0"
-          class="p-6 rounded-2xl font-medium text-lg transition-all duration-300 transform hover:scale-105 disabled:cursor-not-allowed"
+          class="answer-btn p-5 rounded-2xl font-medium text-base transition-all duration-300 transform hover:scale-102 disabled:cursor-not-allowed shadow-md"
           :class="getButtonClass(index)"
         >
           <span class="flex items-center justify-between">
-            <span>{{ option }}</span>
+            <span class="text-left flex-grow">{{ option }}</span>
             <span
               v-if="timeLeft === 0 && index === quizData.correctAnswer"
-              class="text-2xl"
+              class="text-2xl ml-2"
               >✓</span
             >
             <span
@@ -254,7 +293,7 @@
                 index !== quizData.correctAnswer &&
                 timeLeft === 0
               "
-              class="text-2xl"
+              class="text-2xl ml-2"
               >✗</span
             >
           </span>
@@ -326,6 +365,11 @@ const showFinalResults = ref(false);
 const countdownToNext = ref(5);
 const myScore = ref(0);
 const quizReadyForTimer = ref(false);
+
+// ✅ NEW: State untuk pop-up
+const showPointsPopup = ref(false);
+const pointsEarned = ref(0);
+const correctAnswersCount = ref(0);
 
 const quizData = ref<QuizQuestion>({
   question: "",
@@ -425,20 +469,19 @@ function broadcastMessage(type: string, data: any = {}) {
 
 function resetQuizState() {
   selectedAnswer.value = null;
-  // ✅ Set ke nilai default timePerQuestion, BUKAN 0
   timeLeft.value = timePerQuestion;
   quizReadyForTimer.value = false;
-  
-  // Reset quiz data ke state kosong
+  showPointsPopup.value = false; // ✅ Reset popup
+
   quizData.value = {
     question: "",
     options: [],
     correctAnswer: 0,
     category: "",
-    region: ""
+    region: "",
   };
-  
-  console.log(`[${IS_HOST ? 'Host' : 'Guest'}] ✨ Quiz state reset`);
+
+  console.log(`[${IS_HOST ? "Host" : "Guest"}] ✨ Quiz state reset`);
 }
 
 async function generateAndBroadcastQuiz() {
@@ -454,20 +497,16 @@ async function generateAndBroadcastQuiz() {
 
   isGenerating = true;
 
-  // ✅ RESET STATE DULU sebelum generate
   resetQuizState();
 
   isLoadingQuestion.value = true;
 
-  // ✅ Broadcast reset ke semua guest SEBELUM generate
   broadcastMessage("reset_quiz_state", {
     questionNumber: currentQuestion.value,
   });
 
-  // ✅ Kasih waktu guest untuk reset
   await new Promise((resolve) => setTimeout(resolve, 100));
 
-  // ✅ Baru broadcast generating
   broadcastMessage("generating_question", {
     questionNumber: currentQuestion.value,
   });
@@ -490,15 +529,12 @@ async function generateAndBroadcastQuiz() {
       correctAnswer: quiz.correctAnswer,
     });
 
-    // ✅ Set quiz data untuk host
     quizData.value = quiz;
     isLoadingQuestion.value = false;
     quizReadyForTimer.value = true;
 
-    // ✅ Kurangi delay
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    // ✅ Broadcast ke semua guest
     broadcastMessage("new_question", {
       questionNumber: currentQuestion.value,
       quizData: quiz,
@@ -506,10 +542,8 @@ async function generateAndBroadcastQuiz() {
 
     console.log(`[Host] 📤 Question ${currentQuestion.value} broadcasted`);
 
-    // ✅ Kurangi wait time jadi 500ms saja
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // ✅ Baru broadcast start_timer
     console.log("[Host] 🚀 Broadcasting start_timer");
     broadcastMessage("start_timer");
     startTimer();
@@ -540,29 +574,32 @@ function receiveQuizFromHost(data: any) {
 }
 
 function startTimer() {
-  const role = IS_HOST ? 'Host' : 'Guest';
+  const role = IS_HOST ? "Host" : "Guest";
   console.log(`[${role}] ⏱️ Starting timer for Q${currentQuestion.value}`);
-  
+
   if (timerInterval) {
     console.warn(`[${role}] ⚠️ Clearing existing timer`);
     clearInterval(timerInterval);
   }
-  
-  if (!quizData.value.question || !quizData.value.options || quizData.value.options.length !== 4) {
+
+  if (
+    !quizData.value.question ||
+    !quizData.value.options ||
+    quizData.value.options.length !== 4
+  ) {
     console.error(`[${role}] ❌ Invalid quiz data:`, quizData.value);
     return;
   }
-  
+
   timeLeft.value = timePerQuestion;
   console.log(`[${role}] ⏰ Timer: ${timePerQuestion}s`);
-  
+
   timerInterval = setInterval(() => {
     timeLeft.value--;
-    
+
     if (timeLeft.value <= 0) {
       console.log(`[${role}] ⏰ Time's up!`);
       clearInterval(timerInterval);
-      // ✅ Set flag bahwa quiz sudah selesai
       quizReadyForTimer.value = false;
       handleTimeUp();
     }
@@ -576,8 +613,13 @@ function handleTimeUp() {
     selectedAnswer.value = -1;
   }
 
-  if (selectedAnswer.value === quizData.value.correctAnswer) {
+  // ✅ Hitung poin yang didapat
+  const isCorrect = selectedAnswer.value === quizData.value.correctAnswer;
+  pointsEarned.value = isCorrect ? 10 : 0;
+
+  if (isCorrect) {
     myScore.value += 10;
+    correctAnswersCount.value++;
     playerScores.value = {
       ...playerScores.value,
       [storedUsername]: myScore.value,
@@ -589,20 +631,30 @@ function handleTimeUp() {
     JSON.stringify({
       type: "answer_result",
       username: storedUsername,
-      correct: selectedAnswer.value === quizData.value.correctAnswer,
+      correct: isCorrect,
       score: myScore.value,
       timestamp: Date.now(),
     })
   );
 
-  if (IS_HOST) {
+  // ✅ NEW: Tampilkan popup setelah 3 detik
+  setTimeout(() => {
+    showPointsPopup.value = true;
+    console.log(`[Popup] 🎉 Showing points popup: ${pointsEarned.value} pts`);
+
+    // ✅ Tutup popup setelah 3 detik
     setTimeout(() => {
-      console.log("[Host] 📊 Broadcasting show_scoreboard");
-      broadcastMessage("show_scoreboard");
-      showScoreboard.value = true;
-      startScoreboardCountdown();
-    }, 2000);
-  }
+      showPointsPopup.value = false;
+
+      // ✅ Host broadcast scoreboard
+      if (IS_HOST) {
+        console.log("[Host] 📊 Broadcasting show_scoreboard");
+        broadcastMessage("show_scoreboard");
+        showScoreboard.value = true;
+        startScoreboardCountdown();
+      }
+    }, 3000);
+  }, 3000);
 }
 
 function startScoreboardCountdown() {
@@ -620,15 +672,12 @@ function startScoreboardCountdown() {
         }
         showFinalResults.value = true;
       } else {
-        // ✅ Increment question number
         currentQuestion.value++;
 
-        // ✅ RESET STATE sebelum generate soal baru (untuk HOST & GUEST)
         resetQuizState();
 
         if (IS_HOST) {
           console.log(`[Host] 🔄 Moving to question ${currentQuestion.value}`);
-          // ✅ Kurangi delay sebelum generate
           setTimeout(() => {
             generateAndBroadcastQuiz();
           }, 200);
@@ -654,34 +703,34 @@ function selectAnswer(index: number) {
 }
 
 function getButtonClass(index: number) {
-  // ✅ Check jika belum ada quiz data
   if (!quizData.value.question || quizData.value.options.length === 0) {
-    return "bg-white bg-opacity-10 text-gray-400 border border-white border-opacity-20 cursor-not-allowed";
+    return "bg-white text-gray-400 cursor-not-allowed border-2 border-gray-200";
   }
-  
-  // ✅ PENTING: Hanya tampilkan jawaban benar jika timer BENAR-BENAR habis DAN quiz sudah ready
+
   if (timeLeft.value === 0 && quizReadyForTimer.value === false) {
-    // Timer habis SETELAH quiz selesai dijawab
     if (index === quizData.value.correctAnswer) {
-      return "bg-green-500 text-white ring-4 ring-green-300";
+      return "bg-green-500 text-white ";
     }
-    if (selectedAnswer.value === index && index !== quizData.value.correctAnswer) {
-      return "bg-red-500 text-white ring-4 ring-red-300";
+    if (
+      selectedAnswer.value === index &&
+      index !== quizData.value.correctAnswer
+    ) {
+      return "bg-red-500 text-white ";
     }
-    return "bg-white bg-opacity-10 text-gray-400 border border-white border-opacity-20";
+    return "bg-white text-gray-500 border-answer";
   }
 
-  // Jika masih ada waktu atau sedang loading
   if (selectedAnswer.value === index) {
-    return "bg-blue-500 text-white ring-4 ring-blue-300";
+    return "bg-indigo-900 text-white scale-105";
   }
 
-  return "bg-white bg-opacity-20 text-white border border-white border-opacity-30 hover:bg-opacity-30";
+  return " border-answer bg-white text-gray-800 hover:bg-gray-50 hover:border-indigo-300";
 }
 
 async function handlePlayAgain() {
   currentQuestion.value = 1;
   myScore.value = 0;
+  correctAnswersCount.value = 0; // ✅ Reset counter
   showFinalResults.value = false;
 
   playerScores.value = {};
@@ -757,9 +806,7 @@ watch(
           }`
         );
 
-        // ✅ CRITICAL: Hanya guest yang proses broadcast dari host
         if (!IS_HOST) {
-          // ✅ TAMBAHKAN: Handler reset state (PRIORITAS PERTAMA)
           if (data.type === "reset_quiz_state") {
             console.log("[Guest] 🔄 Resetting quiz state...");
             resetQuizState();
@@ -801,8 +848,6 @@ watch(
             router.push("/lobby");
           }
         }
-
-        // ✅ Semua player (host & guest) update score
         if (data.type === "answer_result" && data.username) {
           console.log(`[Score] 💯 ${data.username}: ${data.score} pts`);
           playerScores.value = {
@@ -819,17 +864,9 @@ watch(
   },
   { deep: true }
 );
-
 onMounted(async () => {
   console.log("=".repeat(60));
-  console.log(`[Game] ⚡ MOUNTED`);
-  console.log(`[Game] 👤 Username: ${storedUsername}`);
-  console.log(`[Game] 🏠 Room: ${storedRoomCode}`);
-  console.log(`[Game] 🔍 localStorage.isHost: "${localIsHost}"`);
-  console.log(`[Game] 🎯 Computed IS_HOST: ${IS_HOST}`);
   console.log("=".repeat(60));
-
-  // ✅ CRITICAL SAFETY CHECK
   if (!IS_HOST && !storedIsHost) {
     console.log("[Game] ✅ Confirmed as GUEST");
   } else if (IS_HOST && storedIsHost) {
@@ -839,35 +876,26 @@ onMounted(async () => {
     console.error("[Game] IS_HOST:", IS_HOST);
     console.error("[Game] storedIsHost:", storedIsHost);
     console.error("[Game] localStorage.isHost:", localIsHost);
-
-    // ✅ Force correct value
     const correctIsHost = localStorage.getItem("isHost") === "true";
     console.log("[Game] 🔧 Forcing IS_HOST to:", correctIsHost);
 
-    // Redirect back to lobby if mismatch
     alert("Session error detected. Returning to lobby...");
     router.push("/lobby");
     return;
   }
-
   await new Promise((resolve) => setTimeout(resolve, 500));
-
   const initialScores: Record<string, number> = {};
   const initialRankings: Record<string, number> = {};
-
   players.value.forEach((player) => {
     initialScores[player.username] = 0;
     initialRankings[player.username] = 999;
   });
-
   playerScores.value = initialScores;
   previousRankings.value = initialRankings;
-
   if (IS_HOST) {
     console.log("[Host] 🎮 Initializing as GAME MASTER");
     geminiService.resetUsedSentences();
     createRegionSequence();
-
     await generateAndBroadcastQuiz();
   } else {
     isLoadingQuestion.value = true;
@@ -875,13 +903,10 @@ onMounted(async () => {
     console.log("[Guest] ⚠️ I should NOT generate quiz myself!");
   }
 });
-
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
-  console.log(`[Game] 👋 Unmounted (${IS_HOST ? "Host" : "Guest"})`);
 });
 </script>
-
 <style scoped>
 .list-move,
 .list-enter-active,
@@ -902,11 +927,9 @@ onUnmounted(() => {
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
@@ -921,16 +944,39 @@ onUnmounted(() => {
   }
 }
 
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .animate-fade-in {
-  animation: fade-in 0.5s ease-out;
+  animation: fade-in 0.3s ease-out;
 }
 
 .animate-slide-up {
   animation: slide-up 0.6s ease-out;
 }
 
+.animate-scale-in {
+  animation: scale-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
 .backdrop-filter {
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+}
+
+.hover\:scale-102:hover {
+  transform: scale(1.02);
+}
+
+.border-answer {
+  border: 1px solid black;
 }
 </style>
