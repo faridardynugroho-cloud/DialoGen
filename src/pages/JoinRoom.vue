@@ -151,6 +151,8 @@ const {
   error, 
   status 
 } = useJanusRoom()
+const isInitializing = ref(false);
+const connectionStep = ref('');
 
 // Get room code from URL parameters when component mounts
 onMounted(async () => {

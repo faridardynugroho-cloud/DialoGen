@@ -1,7 +1,15 @@
 <template>
   <div
-   class="min-h-screen p-0 md:p-6"
-  style="background: linear-gradient(to bottom, #FF0000 2%, #FF0000 2%, #ffffff 20%, #ffffff 100%);"
+    class="min-h-screen p-0 md:p-6"
+    style="
+      background: linear-gradient(
+        to bottom,
+        #ff0000 2%,
+        #ff0000 2%,
+        #ffffff 20%,
+        #ffffff 100%
+      );
+    "
   >
     <!-- Loading Overlay -->
     <div
@@ -25,14 +33,14 @@
       <button @click="error = null" class="ml-4 text-white font-bold">×</button>
     </div>
 
-    <div class="relative z-10 max-w-4xl mx-auto ">
+    <div class="relative z-10 max-w-4xl mx-auto">
       <!-- Header with Room Code -->
-      <div class="flex items-center justify-between text-center  mb-2 px-4">
+      <div class="flex items-center justify-between text-center mb-2 px-4">
         <h1 class="text-xl font-bold text-white mb-0">
           {{ isHost ? "Host Lobby" : "Lobby" }}
         </h1>
         <div
-          class="inline-flex items-center  backdrop-filter backdrop-blur-lg rounded-xl px-0 py-3 "
+          class="inline-flex items-center backdrop-filter backdrop-blur-lg rounded-xl px-0 py-3"
         >
           <div
             class="w-8 h-8 bg-red-200 rounded-full flex items-center justify-center mr-3"
@@ -41,7 +49,7 @@
           </div>
           <div class="text-left">
             
-            <p class="text-gray-300 text-sm">Room Code</p>
+            <p class="text-white text-sm">Room Code</p>
             <p class="text-md font-bold text-white">{{ roomCode }}</p>
           </div>
 
@@ -66,106 +74,105 @@
             </svg>
           </button>
         </div>
-        
       </div>
 
       <div class="grid md:grid-cols-3 gap-0 md:gap-6">
         <!-- Players List -->
         <div
-          class="md:col-span-2 bg-white  rounded-tr-2xl rounded-tl-2xl md:rounded-2xl  p-3 border border-white border-opacity-20"
+          class="md:col-span-2 bg-white rounded-tr-2xl rounded-tl-2xl md:rounded-2xl p-3 border border-white border-opacity-20"
         >
           <div class="flex items-center justify-center mb-3">
             <h2 class="md:text-2xl font-bold text-black">Dashboard name</h2>
-            <div
-              class="bg-red rounded-full px-0 py-0 balck text-sm"
-            >
+            <div class="bg-red rounded-full px-0 py-0 balck text-sm">
               {{ players.length }}/{{ maxPlayers }}
             </div>
           </div>
-          <div class=" md:max-h-full overflow-y-auto pr-2" style="max-height: 38vh;">
-          <ul class="space-y-2 mx-2">
-            <li
-              v-for="player in players"
-              :key="player.username"
-              class="button-leave  rounded-xl p-2 flex items-center justify-between"
-            >
-              <div class="flex items-center">
-                <div class="relative mr-4">
-                  <div
-                    class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shadow-md"
-                  >
-                    <span class="text-black font-bold">{{
-                      player.username.charAt(0).toUpperCase()
-                    }}</span>
-                  </div>
-                  <div
-                    v-if="player.isHost"
-                    class="absolute -bottom-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-3 w-3 text-white"
-                      fill="currentColor"
-                      viewBox="0 0 20 20"
+          <div
+            class="md:max-h-full overflow-y-auto pr-2"
+            style="max-height: 38vh"
+          >
+            <ul class="space-y-2 mx-2">
+              <li
+                v-for="player in players"
+                :key="player.username"
+                class="button-leave rounded-xl p-2 flex items-center justify-between"
+              >
+                <div class="flex items-center">
+                  <div class="relative mr-4">
+                    <div
+                      class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center shadow-md"
                     >
-                      <path
-                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
-                      />
-                    </svg>
-                  </div>
-                  <div
-                    v-else
-                    class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full flex items-center justify-center border-2 border-white"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      class="h-3 w-3 text-white"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+                      <span class="text-black font-bold">{{
+                        player.username.charAt(0).toUpperCase()
+                      }}</span>
+                    </div>
+                    <div
+                      v-if="player.isHost"
+                      class="absolute -bottom-1 -right-1 w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white"
                     >
-                      <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-3 w-3 text-white"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      v-else
+                      class="absolute -bottom-1 -right-1 w-5 h-5 bg-green-400 rounded-full flex items-center justify-center border-2 border-white"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        class="h-3 w-3 text-white"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div>
+                    <p class="text-white font-medium">{{ player.username }}</p>
+                    <p class="text-white text-sm">
+                      {{ player.isHost ? "Host" : "Player" }}
+                    </p>
                   </div>
                 </div>
-                <div>
-                  <p class="text-white font-medium">{{ player.username }}</p>
-                  <p class="text-white text-sm">
-                    {{ player.isHost ? "Host" : "Player" }}
-                  </p>
+                <div class="flex items-center">
+                  <div
+                    class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"
+                  ></div>
+                  <span class="text-white text-sm">Online</span>
                 </div>
-              </div>
-              <div class="flex items-center">
-                <div
-                  class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"
-                ></div>
-                <span class="text-white text-sm">Online</span>
-              </div>
-            </li>
-            
+              </li>
 
-            <li
-              v-for="n in maxPlayers - players.length"
-              :key="'empty-' + n"
-              class="bg-red  border-2 border-dashed border-black border-opacity-20 rounded-xl p-4 flex items-center justify-center"
-            >
-              <p class="text-gray-400">Waiting for player...</p>
-            </li>
-          </ul>\
+              <li
+                v-for="n in maxPlayers - players.length"
+                :key="'empty-' + n"
+                class="bg-red border-2 border-dashed border-black border-opacity-20 rounded-xl p-4 flex items-center justify-center"
+              >
+                <p class="text-gray-400">Waiting for player...</p>
+              </li>
+            </ul>
+            \
           </div>
-          
         </div>
 
         <!-- Sidebar -->
-        <div class="space-y-2 ">
+        <div class="space-y-2">
           <template v-if="isHost">
             <div
-              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl p-6 mx-4 mb-6 mt-0 border border-black "
+              class="bg-white backdrop-filter backdrop-blur-lg rounded-2xl p-6 mx-4 mb-6 mt-0 border border-black"
             >
               <h3 class="text-xl font-bold text-black mb-4">Game Settings</h3>
               <div class="space-y-4">
@@ -175,12 +182,32 @@
                   >
                   <select
                     v-model="gameSettings.mode"
-                    class="dropdown-kategori w-full  border border-black border-opacity-20 rounded-lg px-3 py-2 text-white"
+                    class="dropdown-kategori w-full border border-black border-opacity-20 rounded-lg px-3 py-2 text-white"
                   >
-                     <option class="dropdown-kategori bg-gray-400 text-white" value="Bahasa">Bahasa</option>
-                      <option class="dropdown-kategori bg-gray-400 text-white" value="Pakaian Adat">Pakaian Adat</option>
-                      <option class="dropdown-kategori bg-gray-400 text-white" value="Rumah Adat">Rumah Adat</option>
-                      <option class="dropdown-kategori bg-gray-400 text-white" value="Semua Kategori">Semua Kategori</option>
+                    <option
+                      class="dropdown-kategori bg-gray-400 text-white"
+                      value="Bahasa"
+                    >
+                      Bahasa
+                    </option>
+                    <option
+                      class="dropdown-kategori bg-gray-400 text-white"
+                      value="Pakaian Adat"
+                    >
+                      Pakaian Adat
+                    </option>
+                    <option
+                      class="dropdown-kategori bg-gray-400 text-white"
+                      value="Rumah Adat"
+                    >
+                      Rumah Adat
+                    </option>
+                    <option
+                      class="dropdown-kategori bg-gray-400 text-white"
+                      value="Semua Kategori"
+                    >
+                      Semua Kategori
+                    </option>
                   </select>
                 </div>
                 <div>
@@ -189,12 +216,14 @@
                   >
                   <select
                     v-model="gameSettings.timeLimit"
-                    class="w-full  bg-gray-200  border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
+                    class="w-full bg-gray-200 border border-white border-opacity-20 rounded-lg px-3 py-2 text-black"
                   >
-                     <option class="bg-gray-200" value="1">1 minutes</option>
-                      <option class="bg-gray-200" value="2">2 minutes</option>
-                      <option class="bg-gray-200" value="3">3 minutes</option>
-                      <option class="bg-gray-200" value="unlimited">No Limit</option>
+                    <option class="bg-gray-200" value="1">1 minutes</option>
+                    <option class="bg-gray-200" value="2">2 minutes</option>
+                    <option class="bg-gray-200" value="3">3 minutes</option>
+                    <option class="bg-gray-200" value="unlimited">
+                      No Limit
+                    </option>
                   </select>
                 </div>
                 <div>
@@ -226,7 +255,7 @@
                     }}</span>
                     <button
                       @click="increaseMaxPlayers"
-                      class="button-plus w-8 h-8  bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
+                      class="button-plus w-8 h-8 bg-opacity-20 rounded-lg flex items-center justify-center text-white hover:bg-opacity-30"
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -248,30 +277,30 @@
               </div>
             </div>
 
-            <div class="mx-4 ">
-            <button
-              @click="handleStartGame"
-              :disabled="players.length < 2"
-              class="button-start w-full py-3  disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105"
-            >
-              <span class="flex items-center justify-center">
-                Start Game
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 ml-2"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M13 7l5 5m0 0l-5 5m5-5H6"
-                  />
-                </svg>
-              </span>
-            </button>
+            <div class="mx-4">
+              <button
+                @click="handleStartGame"
+                :disabled="players.length < 2"
+                class="button-start w-full py-3 disabled:from-gray-500 disabled:to-gray-600 disabled:cursor-not-allowed text-white rounded-2xl text-lg font-bold transition-all duration-300 transform hover:scale-105"
+              >
+                <span class="flex items-center justify-center">
+                  Start Game
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="h-5 w-5 ml-2"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
+                </span>
+              </button>
             </div>
 
             <div
@@ -284,7 +313,7 @@
 
           <template v-else>
             <div
-              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl mb-4  p-1 px-4 border border-black mx-4"
+              class="bg-white backdrop-filter backdrop-blur-lg rounded-2xl mb-4 p-1 px-4 border border-black mx-4"
             >
               <h3 class="text-xl font-bold text-black mb-2">Room Info</h3>
               <div class="space-y-1">
@@ -300,9 +329,9 @@
                 </div>
                 <div class="flex justify-between">
                   <span class="text-black">Time Limit</span>
-                  <span class="text-black font-medium">{{
-                    gameSettings.timeLimit || "Time"
-                  }} minutes</span>
+                  <span class="text-black font-medium"
+                    >{{ gameSettings.timeLimit || "Time" }} minutes</span
+                  >
                 </div>
                 <div class="flex justify-between">
                   <span class="text-black">Players</span>
@@ -314,7 +343,7 @@
             </div>
 
             <div
-              class="bg-white  backdrop-filter backdrop-blur-lg rounded-2xl  p-6 mx-4 border border-black "
+              class="bg-white backdrop-filter backdrop-blur-lg rounded-2xl p-6 mx-4 border border-black"
             >
               <div class="flex flex-col items-center justify-center">
                 <div class="relative mb-4">
@@ -331,14 +360,14 @@
               </div>
             </div>
           </template>
-          
-          <div class="mx-4 mt-2 ">
-          <button
-            @click="handleLeaveRoom"
-            class="button-leave mb-4 mt-2 w-full py-3 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
-          >
-            Leave Room
-          </button>
+
+          <div class="mx-4 mt-2">
+            <button
+              @click="handleLeaveRoom"
+              class="button-leave mb-4 mt-2 w-full py-3 hover:bg-opacity-100 text-white rounded-xl font-medium transition-all duration-300"
+            >
+              Leave Room
+            </button>
           </div>
         </div>
       </div>
@@ -366,6 +395,7 @@ const {
   isLoading,
   error,
   status,
+
   roomCode,
   username,
   isHost,
@@ -647,31 +677,92 @@ const decreaseMaxPlayers = () => {
 };
 
 async function handleStartGame() {
-  console.log("==========================================");
+  console.log("=".repeat(60));
   console.log("[Lobby] 🎮 HOST CLICKED START GAME");
+  console.log("=".repeat(60));
+  
+  // ✅ CRITICAL: Verify current session data
+  const sessionUsername = sessionStorage.getItem('lockedUsername');
+  const sessionIsHost = sessionStorage.getItem('lockedIsHost');
+  const sessionWindowId = sessionStorage.getItem('windowId');
+  
+  const localUsername = localStorage.getItem('username');
+  const localIsHost = localStorage.getItem('isHost');
+  
+  console.log("[Lobby] 🔍 SESSION CHECK:");
+  console.log("  sessionStorage.lockedUsername:", sessionUsername);
+  console.log("  sessionStorage.lockedIsHost:", sessionIsHost);
+  console.log("  sessionStorage.windowId:", sessionWindowId);
+  console.log("  localStorage.username:", localUsername);
+  console.log("  localStorage.isHost:", localIsHost);
+  console.log("  composable.username:", username.value);
+  console.log("  composable.isHost:", isHost.value);
+  
+  // ✅ CRITICAL: Check for mismatch
+  if (sessionUsername && sessionUsername !== username.value) {
+    console.error("[Lobby] ❌ USERNAME MISMATCH DETECTED!");
+    console.error("  sessionStorage says:", sessionUsername);
+    console.error("  composable says:", username.value);
+    alert("Session corrupted! Please refresh and try again.");
+    return;
+  }
+  
+  if (localUsername && localUsername !== username.value) {
+    console.warn("[Lobby] ⚠️ localStorage MISMATCH!");
+    console.warn("  localStorage says:", localUsername);
+    console.warn("  composable says:", username.value);
+    console.warn("  Fixing localStorage...");
+    
+    localStorage.setItem('username', username.value);
+    localStorage.setItem('isHost', isHost.value ? 'true' : 'false');
+    
+    console.log("[Lobby] ✅ Fixed localStorage");
+  }
+  
   console.log("[Lobby] Settings:", gameSettings.value);
-  console.log("[Lobby] isHost (composable):", isHost.value); // ✅ Log untuk debug
-  console.log("==========================================");
+  console.log("=".repeat(60));
 
   // ✅ Save game settings
   localStorage.setItem("gameSettings", JSON.stringify(gameSettings.value));
   localStorage.setItem("gameStarted", "true");
+  
+  console.log("[Lobby] 💾 Saved gameSettings to localStorage");
 
   // ✅ Broadcast game start via Janus
   const startResult = startGame(gameSettings.value);
   console.log("[Lobby] ✅ startGame() returned", startResult);
 
-  // ✅ FIX: Set localStorage.isHost berdasarkan composable
-  if (isHost.value) {
+  // ✅ CRITICAL: Ensure correct isHost value
+  const finalIsHost = isHost.value;
+  
+  if (finalIsHost) {
     localStorage.setItem("isHost", "true");
     console.log("[Lobby] ✅ Set localStorage.isHost = true (HOST)");
   } else {
     localStorage.setItem("isHost", "false");
     console.log("[Lobby] ✅ Set localStorage.isHost = false (GUEST)");
   }
+  
+  // ✅ Double-check sessionStorage
+  if (sessionIsHost) {
+    console.log("[Lobby] ✅ sessionStorage.lockedIsHost confirmed:", sessionIsHost);
+  } else {
+    console.warn("[Lobby] ⚠️ sessionStorage.lockedIsHost is missing!");
+  }
+
+  // ✅ Final verification before redirect
+  console.log("[Lobby] 🔍 FINAL CHECK before redirect:");
+  console.log("  username.value:", username.value);
+  console.log("  isHost.value:", isHost.value);
+  console.log("  localStorage.username:", localStorage.getItem('username'));
+  console.log("  localStorage.isHost:", localStorage.getItem('isHost'));
+  console.log("  sessionStorage.lockedUsername:", sessionStorage.getItem('lockedUsername'));
+  console.log("  sessionStorage.lockedIsHost:", sessionStorage.getItem('lockedIsHost'));
 
   // ✅ Redirect ke game page
   console.log("[Lobby] 🚀 Redirecting to /game...");
+  console.log("=".repeat(60));
+  
   await router.push("/game");
 }
 
@@ -812,21 +903,20 @@ select::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.5);
 }
 
-.button-plus{
+.button-plus {
   background-color: #201658;
 }
 
-.dropdown-kategori{
+.dropdown-kategori {
   background-color: #201658;
   text-decoration-color: white;
 }
 
-.button-start{
+.button-start {
   background-color: #201658;
-  
 }
 
-.button-leave{
-  background-color: #FF0000;
+.button-leave {
+  background-color: #ff0000;
 }
 </style>

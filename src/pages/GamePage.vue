@@ -1,6 +1,6 @@
 <template>
   <div
-    class="min-h-screen p-0"
+    class="min-h-screen p-0 overflow-y-auto"
     style="
       background: linear-gradient(
         to bottom,
@@ -64,13 +64,13 @@
       </div>
 
       <div
-        class="bg-red-500 absolute left-3 right-3 top-80 bottom-80 rounded-3xl p-6 flex-col flex items-center justify-center shadow-lg"
+        class="bg-red-500 w-full rounded-3xl p-6 flex-col flex items-center justify-center shadow-lg"
         :class="
           pointsEarned > 0 ? 'animate-bounce-celebration' : 'animate-shake'
         "
       >
         <div
-          class="bg-white rounded-3xl max-w-sm w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
+          class="bg-white rounded-3xl w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
         >
           <div class="bg-gray-50 rounded-2xl p-6 mb-4">
             <p class="text-black text-center text-xl mb-2">Current Score</p>
@@ -109,33 +109,29 @@
     <!-- Scoreboard Transition -->
     <div
       v-if="showScoreboard"
-      class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+      class="fixed inset-0 w-full bg-black bg-opacity-80 flex items-center justify-center z-50"
     >
       <div
-        class="bg-red-500 backdrop-filter backdrop-blur-lg rounded-3xl p-6 max-w-2xl w-full mx-4 border border-white border-opacity-20 animate-slide-up"
+        class="bg-red-500 backdrop-filter backdrop-blur-lg rounded-3xl mx-auto h-full p-6 w-full border border-white border-opacity-20 animate-slide-up"
       >
         <h2 class="text-3xl font-bold text-white text-center mb-6">
           Current Scores
         </h2>
 
         <div
-          class="space-y-3 mb-8 relative max-w-sm"
-          style="min-height: 80vh; min-width: 90vw"
+          class="space-y-3 mb-8 relative max-w-full"
+          style="min-height: 70vh; min-width: 80vw"
         >
-          <img
-            :src="imagebackground"
-            class="absolute top-0 w-full object-contain z-0"
-          />
           <TransitionGroup name="list" tag="div" class="z-10">
             <div
               v-for="(player, index) in sortedPlayers"
               :key="player.username"
-              class="bg-white text-black rounded-xl py-2 p-4 flex items-center justify-between transition-all duration-500 absolute w-full"
+              class="w-full bg-white text-black rounded-xl py-2 p-4 my-2 flex items-center justify-between transition-all duration-500  "
               :style="{ top: `${index * 72}px` }"
             >
               <div class="flex items-center">
                 <div
-                  class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-500 bg-white text-black font-bold text-md mr-4"
+                  class="flex items-center mx-auto justify-center w-8 h-8 rounded-full border border-gray-500 bg-white text-black font-bold text-md mr-0"
                 >
                   {{ index + 1 }}
                 </div>
@@ -309,7 +305,7 @@
       </div>
 
       <!-- Answer Options -->
-      <div class="grid grid-cols-1 gap-8 mt-20">
+      <div class="grid grid-cols-1 gap-8 mt-20 mb-10">
         <button
           v-for="(option, index) in quizData.options"
           :key="index"
@@ -345,7 +341,6 @@
 import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useJanusRoom } from "@/composable/UseJanusRoom";
-import imagebackground from "@/assets/image/Frame.png";
 import {
   useDeepSeekQuiz as useGeminiQuiz,
   type QuizQuestion,
@@ -353,31 +348,90 @@ import {
 
 const router = useRouter();
 
-const storedUsername = localStorage.getItem("username") || "";
-const storedRoomCode = localStorage.getItem("roomCode") || "";
+// ✅ CRITICAL FIX: Lock username dari sessionStorage DULU, baru localStorage
+console.log("=".repeat(80));
+console.log("[GamePage] 🎮 INITIALIZATION START");
+console.log("=".repeat(80));
 
-// ✅ FIX: Cek isHost dengan benar
-const localIsHost = localStorage.getItem("isHost");
-const storedIsHost = localIsHost === "true";
+// ✅ STEP 1: Check sessionStorage first (tab-specific, NOT shared!)
+const SESSION_USERNAME = sessionStorage.getItem("lockedUsername") || "";
+const SESSION_ROOM_CODE = sessionStorage.getItem("lockedRoomCode") || "";
+const SESSION_IS_HOST = sessionStorage.getItem("lockedIsHost") === "true";
+const WINDOW_ID = sessionStorage.getItem("windowId") || "unknown";
 
-const playerRankings = ref<Record<string, number>>({});
-const playerRankChanges = ref<Record<string, number>>({});
+console.log("[GamePage] 📦 sessionStorage (PRIORITY):", {
+  username: SESSION_USERNAME,
+  roomCode: SESSION_ROOM_CODE,
+  isHost: SESSION_IS_HOST,
+  windowId: WINDOW_ID,
+});
 
-if (!storedUsername || !storedRoomCode) {
-  console.error("[Game] ❌ Missing username or room code!");
+// ✅ STEP 2: Check localStorage (might be corrupted, shared across tabs!)
+const LOCAL_USERNAME = localStorage.getItem("username") || "";
+const LOCAL_ROOM_CODE = localStorage.getItem("roomCode") || "";
+const LOCAL_IS_HOST = localStorage.getItem("isHost") === "true";
+
+console.log("[GamePage] 💾 localStorage (SECONDARY):", {
+  username: LOCAL_USERNAME,
+  roomCode: LOCAL_ROOM_CODE,
+  isHost: LOCAL_IS_HOST,
+});
+
+// ✅ STEP 3: Determine FINAL values with PRIORITY
+let LOCKED_USERNAME = "";
+let LOCKED_ROOM_CODE = "";
+let LOCKED_IS_HOST = false;
+
+if (SESSION_USERNAME && SESSION_ROOM_CODE) {
+  // ✅ Prioritas 1: sessionStorage
+  LOCKED_USERNAME = SESSION_USERNAME;
+  LOCKED_ROOM_CODE = SESSION_ROOM_CODE;
+  LOCKED_IS_HOST = SESSION_IS_HOST;
+  console.log("[GamePage] ✅ Using sessionStorage (RECOMMENDED)");
+} else if (LOCAL_USERNAME && LOCAL_ROOM_CODE) {
+  // ✅ Fallback: localStorage
+  LOCKED_USERNAME = LOCAL_USERNAME;
+  LOCKED_ROOM_CODE = LOCAL_ROOM_CODE;
+  LOCKED_IS_HOST = LOCAL_IS_HOST;
+  console.warn("[GamePage] ⚠️ Falling back to localStorage (RISKY!)");
+} else {
+  // ❌ FATAL: No valid data
+  console.error("[GamePage] ❌ FATAL: No username/roomCode found!");
+  console.error("  sessionStorage:", { SESSION_USERNAME, SESSION_ROOM_CODE });
+  console.error("  localStorage:", { LOCAL_USERNAME, LOCAL_ROOM_CODE });
+  alert("Session error! Returning to home...");
   router.push("/");
 }
 
-// ✅ CRITICAL: Immutable IS_HOST
-const IS_HOST = storedIsHost;
-
-// ✅ Log untuk debugging
-console.log("[Game] 🔍 INIT CHECK:", {
-  username: storedUsername,
-  isHostFromStorage: localIsHost,
-  finalIsHost: IS_HOST,
-  roomCode: storedRoomCode,
+console.log("[GamePage] 🔒 FINAL LOCKED VALUES:", {
+  username: LOCKED_USERNAME,
+  roomCode: LOCKED_ROOM_CODE,
+  isHost: LOCKED_IS_HOST,
+  source: SESSION_USERNAME ? "sessionStorage" : "localStorage",
 });
+
+// ✅ STEP 4: CRITICAL - Lock isHost as IMMUTABLE constant
+const IS_HOST = LOCKED_IS_HOST;
+
+console.log("[GamePage] 🎭 FINAL ROLE:", IS_HOST ? "🔴 HOST" : "🔵 GUEST");
+console.log("=".repeat(80));
+
+// ✅ STEP 5: Verify consistency
+if (SESSION_USERNAME && LOCAL_USERNAME && SESSION_USERNAME !== LOCAL_USERNAME) {
+  console.error("[GamePage] ❌ MISMATCH DETECTED!");
+  console.error("  sessionStorage username:", SESSION_USERNAME);
+  console.error("  localStorage username:", LOCAL_USERNAME);
+  console.warn("[GamePage] 🔧 Fixing localStorage to match sessionStorage...");
+  
+  localStorage.setItem("username", SESSION_USERNAME);
+  localStorage.setItem("roomCode", SESSION_ROOM_CODE);
+  localStorage.setItem("isHost", SESSION_IS_HOST ? "true" : "false");
+  
+  console.log("[GamePage] ✅ localStorage fixed!");
+}
+
+const playerRankings = ref<Record<string, number>>({});
+const playerRankChanges = ref<Record<string, number>>({});
 
 const geminiService = useGeminiQuiz();
 
@@ -385,8 +439,28 @@ const JANUS_SERVER = import.meta.env.VITE_JANUS_SERVER;
 const { players, messages, roomCode, username, sendMessage, leaveRoom } =
   useJanusRoom(JANUS_SERVER);
 
-if (!username.value) username.value = storedUsername;
-if (!roomCode.value) roomCode.value = storedRoomCode;
+// ✅ CRITICAL: Force correct username ke composable jika kosong
+if (!username.value) {
+  console.warn("[GamePage] ⚠️ Composable username empty, setting to:", LOCKED_USERNAME);
+  username.value = LOCKED_USERNAME;
+}
+if (!roomCode.value) {
+  console.warn("[GamePage] ⚠️ Composable roomCode empty, setting to:", LOCKED_ROOM_CODE);
+  roomCode.value = LOCKED_ROOM_CODE;
+}
+
+// ✅ Verify consistency after setup
+console.log("[GamePage] 🔍 VERIFICATION after setup:");
+console.log("  LOCKED_USERNAME:", LOCKED_USERNAME);
+console.log("  composable.username:", username.value);
+console.log("  IS_HOST:", IS_HOST);
+console.log("  Match:", username.value === LOCKED_USERNAME);
+
+if (username.value !== LOCKED_USERNAME) {
+  console.error("[GamePage] ❌ STILL MISMATCH after setup!");
+  console.error("  Expected:", LOCKED_USERNAME);
+  console.error("  Got:", username.value);
+}
 
 const savedSettings = JSON.parse(
   localStorage.getItem("gameSettings") || '{"mode":"bahasa","timeLimit":"5"}'
@@ -408,10 +482,10 @@ const countdownToNext = ref(5);
 const myScore = ref(0);
 const quizReadyForTimer = ref(false);
 
-// ✅ NEW: State untuk pop-up
 const showPointsPopup = ref(false);
 const pointsEarned = ref(0);
 const correctAnswersCount = ref(0);
+const lastScoreUpdate = ref<Record<string, number>>({});
 
 const randomColor = () => {
   const colors = [
@@ -489,23 +563,19 @@ const sortedPlayers = computed(() => {
     });
   });
 
-  // Sort by score descending
   scores.sort((a, b) => b.score - a.score);
 
-  // ✅ Calculate rank changes
   scores.forEach((player, newRank) => {
     const oldRank = playerRankings.value[player.username];
 
     if (oldRank !== undefined && oldRank !== newRank) {
-      // Player ranking berubah
-      const rankChange = oldRank - newRank; // Positif = naik, Negatif = turun
+      const rankChange = oldRank - newRank;
       player.lastChange = rankChange;
-      playerRankChanges.value[player.username] = rankChange;
 
       console.log(
-        `[Ranking] ${player.username}: ${oldRank} → ${newRank} (${
-          rankChange > 0 ? "+" : ""
-        }${rankChange})`
+        `[Ranking] ${player.username}: Rank ${oldRank} → ${newRank} (${
+          rankChange > 0 ? "↑" : "↓"
+        }${Math.abs(rankChange)})`
       );
     } else {
       player.lastChange = 0;
@@ -518,7 +588,11 @@ const sortedPlayers = computed(() => {
 function captureCurrentRankings() {
   const currentRankings: Record<string, number> = {};
 
-  // Sort players by current score
+  if (players.value.length === 0) {
+    console.warn("[Ranking] No players to rank");
+    return;
+  }
+
   const sortedByScore = [...players.value].sort((a, b) => {
     const scoreA = playerScores.value[a.username] ?? 0;
     const scoreB = playerScores.value[b.username] ?? 0;
@@ -529,24 +603,26 @@ function captureCurrentRankings() {
     currentRankings[player.username] = index;
   });
 
+  console.log("[Ranking] 📸 Captured rankings:", {
+    before: { ...playerRankings.value },
+    after: currentRankings,
+    scores: { ...playerScores.value },
+  });
+
   playerRankings.value = currentRankings;
-  console.log("[Ranking] Captured rankings:", currentRankings);
 }
 
-// ✅ Clear rank changes setelah animasi selesai
 function clearRankChanges() {
   setTimeout(() => {
     playerRankChanges.value = {};
     console.log("[Ranking] Cleared rank changes");
-  }, 2000); // Clear setelah 2 detik (durasi animasi)
+  }, 2000);
 }
 
-// ✅ Sound Effects menggunakan Web Audio API
 function playCorrectSound() {
   const audioContext = new (window.AudioContext ||
     (window as any).webkitAudioContext)();
 
-  // Celebratory ascending notes: C5, E5, G5, C6
   const notes = [523.25, 659.25, 783.99, 1046.5];
   const startTime = audioContext.currentTime;
 
@@ -577,7 +653,6 @@ function playWrongSound() {
   const audioContext = new (window.AudioContext ||
     (window as any).webkitAudioContext)();
 
-  // Descending "sad" notes: A4, F4, D4
   const notes = [440, 349.23, 293.66];
   const startTime = audioContext.currentTime;
 
@@ -619,7 +694,7 @@ function broadcastMessage(type: string, data: any = {}) {
     type,
     ...data,
     seq: uniqueSeq,
-    hostId: storedUsername,
+    hostId: LOCKED_USERNAME,
     timestamp: Date.now(),
   };
 
@@ -631,7 +706,7 @@ function resetQuizState() {
   selectedAnswer.value = null;
   timeLeft.value = timePerQuestion;
   quizReadyForTimer.value = false;
-  showPointsPopup.value = false; // ✅ Reset popup
+  showPointsPopup.value = false;
 
   quizData.value = {
     question: "",
@@ -740,6 +815,7 @@ function startTimer() {
   if (timerInterval) {
     console.warn(`[${role}] ⚠️ Clearing existing timer`);
     clearInterval(timerInterval);
+    timerInterval = null;
   }
 
   if (
@@ -760,6 +836,7 @@ function startTimer() {
     if (timeLeft.value <= 0) {
       console.log(`[${role}] ⏰ Time's up!`);
       clearInterval(timerInterval);
+      timerInterval = null;
       quizReadyForTimer.value = false;
       handleTimeUp();
     }
@@ -771,112 +848,130 @@ function handleTimeUp() {
 
   if (selectedAnswer.value === null) {
     selectedAnswer.value = -1;
-    pointsEarned.value = 0; // ✅ Tidak dijawab = 0 poin
+    pointsEarned.value = 0;
   }
+
+  const isCorrect = selectedAnswer.value === quizData.value.correctAnswer;
 
   captureCurrentRankings();
 
-  // ✅ GUNAKAN pointsEarned yang SUDAH DIHITUNG di selectAnswer()
-  // JANGAN hitung ulang karena timeLeft sudah 0!
-  
-  const isCorrect = selectedAnswer.value === quizData.value.correctAnswer;
-  
   if (isCorrect && pointsEarned.value > 0) {
     myScore.value += pointsEarned.value;
     correctAnswersCount.value++;
-    playerScores.value = {
-      ...playerScores.value,
-      [storedUsername]: myScore.value,
-    };
-    console.log(`[Score] 💯 Earned ${pointsEarned.value} pts | Total: ${myScore.value}`);
+    console.log(
+      `[Score] 💯 Earned ${pointsEarned.value} pts | Total: ${myScore.value}`
+    );
   }
 
-  sendMessage(
-    JSON.stringify({
-      type: "answer_result",
-      username: storedUsername,
-      correct: isCorrect,
-      score: myScore.value,
-      pointsEarned: pointsEarned.value,
-      timestamp: Date.now(),
-    })
+  // ✅ CRITICAL: Use LOCKED_USERNAME consistently
+  playerScores.value = {
+    ...playerScores.value,
+    [LOCKED_USERNAME]: myScore.value,
+  };
+  console.log(
+    `[Score] 📝 Updated own score: ${LOCKED_USERNAME} = ${myScore.value}`
   );
 
-  // ✅ NEW: Tampilkan popup setelah 3 detik
+  const myAnswerResult = {
+    type: "answer_result",
+    username: LOCKED_USERNAME,
+    correct: isCorrect,
+    score: myScore.value,
+    pointsEarned: pointsEarned.value,
+    timestamp: Date.now(),
+  };
+
+  sendMessage(JSON.stringify(myAnswerResult));
+  
+  console.log(
+    `[Score] 📤 Broadcast answer_result: ${LOCKED_USERNAME} = ${myScore.value}`
+  );
+
   setTimeout(() => {
     showPointsPopup.value = true;
     console.log(`[Popup] 🎉 Showing points popup: ${pointsEarned.value} pts`);
+    console.log(`[Score] 📊 Final playerScores:`, { ...playerScores.value });
 
     if (pointsEarned.value > 0) {
       playCorrectSound();
-      console.log(
-        `[Popup] 🎉 Correct! Showing points popup: ${pointsEarned.value} pts`
-      );
     } else {
       playWrongSound();
-      console.log(
-        `[Popup] 😢 Wrong! Showing points popup: ${pointsEarned.value} pts`
-      );
     }
 
-    // ✅ Tutup popup setelah 3 detik
     setTimeout(() => {
       showPointsPopup.value = false;
 
-      // ✅ Cek apakah sudah soal terakhir (question 10)
       if (currentQuestion.value >= 10) {
-        // ✅ Save final scores ke localStorage
-        localStorage.setItem("finalScores", JSON.stringify(playerScores.value));
+        const finalScoresData = {
+          isHost: IS_HOST,
+          myUsername: LOCKED_USERNAME,
+          scores: { ...playerScores.value },
+        };
+
+        localStorage.setItem("finalScores", JSON.stringify(finalScoresData));
+        console.log("[Game] 💾 Saving final scores:", finalScoresData);
 
         if (IS_HOST) {
-          console.log("[Host] 🏁 Game finished, redirecting to final score...");
-          broadcastMessage("game_over");
+          broadcastMessage("game_over", {
+            finalScores: playerScores.value,
+          });
         }
 
-        // ✅ Redirect ke final score page
         setTimeout(() => {
           router.push("/finalscore");
         }, 500);
       } else {
-        // ✅ Lanjut ke scoreboard (soal belum selesai)
         if (IS_HOST) {
           console.log("[Host] 📊 Broadcasting show_scoreboard");
           broadcastMessage("show_scoreboard");
           showScoreboard.value = true;
           startScoreboardCountdown();
-          clearRankChanges();
         }
       }
-    }, 3000);
-  }, 3000);
+    }, 2500);
+  }, 1500);
 }
 
-
 function startScoreboardCountdown() {
+  if (!IS_HOST) {
+    console.warn("[Guest] ❌ Blocked startScoreboardCountdown");
+    return;
+  }
+
+  console.log("[Host] ⏱️ Starting scoreboard countdown from 5");
   countdownToNext.value = 5;
+
   const interval = setInterval(() => {
     countdownToNext.value--;
+    console.log(`[Host] Countdown: ${countdownToNext.value}`);
+
     if (countdownToNext.value <= 0) {
       clearInterval(interval);
       showScoreboard.value = false;
+      console.log("[Host] Scoreboard closed");
 
       if (currentQuestion.value >= 10) {
-        if (IS_HOST) {
-          console.log("[Host] 🏁 Broadcasting game_over");
-          broadcastMessage("game_over");
-        }
-        showFinalResults.value = true;
-      } else {
-        currentQuestion.value++;
+        console.log("[Host] 🏁 Game finished, broadcasting game_over");
+        broadcastMessage("game_over", { finalScores: playerScores.value });
 
+        setTimeout(() => {
+          router.push("/finalscore");
+        }, 500);
+      } else {
+        setTimeout(() => {
+          Object.keys(playerRankChanges.value).forEach((username) => {
+            playerRankChanges.value[username] = 0;
+          });
+          console.log("[Host] Cleared rank changes");
+        }, 500);
+
+        currentQuestion.value++;
         resetQuizState();
 
-        if (IS_HOST) {
-          console.log(`[Host] 🔄 Moving to question ${currentQuestion.value}`);
-          setTimeout(() => {
-            generateAndBroadcastQuiz();
-          }, 200);
-        }
+        console.log(`[Host] 🔄 Moving to question ${currentQuestion.value}`);
+        setTimeout(() => {
+          generateAndBroadcastQuiz();
+        }, 200);
       }
     }
   }, 1000);
@@ -884,23 +979,26 @@ function startScoreboardCountdown() {
 
 function selectAnswer(index: number) {
   if (timeLeft.value === 0) return;
-  if (selectedAnswer.value !== null) return; // Prevent multiple selections
-  
+
   selectedAnswer.value = index;
-  
-  // ✅ Hitung poin LANGSUNG saat jawaban dipilih
+
   const isCorrect = index === quizData.value.correctAnswer;
-  
+
   if (isCorrect) {
     const maxPoints = 15;
     const minPoints = 3;
     const pointRange = maxPoints - minPoints;
-    
+
     const timeRatio = timeLeft.value / timePerQuestion;
-    const calculatedPoints = Math.round(minPoints + (pointRange * timeRatio));
-    pointsEarned.value = Math.max(minPoints, Math.min(maxPoints, calculatedPoints));
-    
-    console.log(`[Answer] ✅ Correct! Time left: ${timeLeft.value}s → ${pointsEarned.value} pts`);
+    const calculatedPoints = Math.round(minPoints + pointRange * timeRatio);
+    pointsEarned.value = Math.max(
+      minPoints,
+      Math.min(maxPoints, calculatedPoints)
+    );
+
+    console.log(
+      `[Answer] ✅ Correct! Time left: ${timeLeft.value}s → ${pointsEarned.value} pts`
+    );
   } else {
     pointsEarned.value = 0;
     console.log(`[Answer] ❌ Wrong answer`);
@@ -909,7 +1007,7 @@ function selectAnswer(index: number) {
   sendMessage(
     JSON.stringify({
       type: "player_answer",
-      username: storedUsername,
+      username: LOCKED_USERNAME,
       answer: index,
       correct: isCorrect,
       pointsEarned: pointsEarned.value,
@@ -947,11 +1045,12 @@ function getButtonClass(index: number) {
 async function handlePlayAgain() {
   currentQuestion.value = 1;
   myScore.value = 0;
-  correctAnswersCount.value = 0; // ✅ Reset counter
+  correctAnswersCount.value = 0;
   showFinalResults.value = false;
 
   playerScores.value = {};
   previousRankings.value = {};
+  lastScoreUpdate.value = {};
   quizReadyForTimer.value = false;
 
   if (IS_HOST) {
@@ -972,6 +1071,7 @@ async function handleLeaveRoom() {
   localStorage.removeItem("isHost");
   localStorage.removeItem("gameStarted");
   localStorage.removeItem("gameSettings");
+  sessionStorage.clear();
   router.push("/");
 }
 
@@ -1056,8 +1156,22 @@ watch(
           } else if (data.type === "show_scoreboard") {
             console.log("[Guest] 📊 Show scoreboard");
             showScoreboard.value = true;
-            startScoreboardCountdown();
-            clearRankChanges();
+
+            countdownToNext.value = 5;
+            const guestCountdown = setInterval(() => {
+              countdownToNext.value--;
+              if (countdownToNext.value <= 0) {
+                clearInterval(guestCountdown);
+                showScoreboard.value = false;
+
+                Object.keys(playerRankChanges.value).forEach((username) => {
+                  playerRankChanges.value[username] = 0;
+                });
+                console.log(
+                  "[Guest] Cleared rank changes, waiting for next question"
+                );
+              }
+            }, 1000);
           } else if (data.type === "game_over") {
             console.log("[Guest] 🏁 Game over, redirecting...");
             setTimeout(() => {
@@ -1069,18 +1183,46 @@ watch(
           }
         }
 
+        // ✅ CRITICAL FIX: Skip answer_result dari diri sendiri
         if (data.type === "answer_result" && data.username) {
-          console.log(`[Score] 💯 ${data.username}: ${data.score} pts`);
-
-          // ✅ Capture ranking SEBELUM update score
-          if (!playerRankings.value[data.username]) {
-            captureCurrentRankings();
+          if (data.username === LOCKED_USERNAME) {
+            console.log(
+              `[Score] ⏭️ Skipping own answer_result: ${data.username} = ${data.score} pts`
+            );
+            continue;
           }
 
-          playerScores.value = {
-            ...playerScores.value,
-            [data.username]: data.score,
-          };
+          console.log(
+            `[Score] 💯 Received answer_result from OTHER player: ${data.username} = ${data.score} pts`
+          );
+
+          const currentTimestamp = lastScoreUpdate.value[data.username] || 0;
+          const newTimestamp = data.timestamp || Date.now();
+
+          if (newTimestamp >= currentTimestamp) {
+            const currentScore = playerScores.value[data.username] || 0;
+            if (data.score >= currentScore) {
+              playerScores.value = {
+                ...playerScores.value,
+                [data.username]: data.score,
+              };
+              lastScoreUpdate.value = {
+                ...lastScoreUpdate.value,
+                [data.username]: newTimestamp,
+              };
+              console.log(
+                `[Score] ✅ Updated ${data.username}: ${currentScore} → ${data.score}`
+              );
+            } else {
+              console.warn(
+                `[Score] ⚠️ Rejected decrease for ${data.username}: ${data.score} < ${currentScore}`
+              );
+            }
+          } else {
+            console.warn(
+              `[Score] ⚠️ Rejected old message for ${data.username}`
+            );
+          }
         }
       } catch (e) {
         console.error("[Watch] ❌ Parse error:", e);
@@ -1094,19 +1236,26 @@ watch(
 
 onMounted(async () => {
   console.log("=".repeat(60));
+  console.log("[GamePage] 🎮 COMPONENT MOUNTED");
   console.log("=".repeat(60));
-  if (!IS_HOST && !storedIsHost) {
-    console.log("[Game] ✅ Confirmed as GUEST");
-  } else if (IS_HOST && storedIsHost) {
-    console.log("[Game] ✅ Confirmed as HOST");
-  } else {
-    console.error("[Game] ❌❌❌ MISMATCH DETECTED!");
-    console.error("[Game] IS_HOST:", IS_HOST);
-    console.error("[Game] storedIsHost:", storedIsHost);
-    console.error("[Game] localStorage.isHost:", localIsHost);
-    const correctIsHost = localStorage.getItem("isHost") === "true";
-    console.log("[Game] 🔧 Forcing IS_HOST to:", correctIsHost);
+  
+  // ✅ FINAL CHECK: Verify all values before starting
+  console.log("[GamePage] 🔍 FINAL VERIFICATION:");
+  console.log("  LOCKED_USERNAME:", LOCKED_USERNAME);
+  console.log("  LOCKED_ROOM_CODE:", LOCKED_ROOM_CODE);
+  console.log("  IS_HOST:", IS_HOST);
+  console.log("  composable.username:", username.value);
+  console.log("  composable.roomCode:", roomCode.value);
+  console.log("  sessionStorage.lockedUsername:", sessionStorage.getItem('lockedUsername'));
+  console.log("  localStorage.username:", localStorage.getItem('username'));
+  console.log("=".repeat(60));
 
+  if (!IS_HOST && !LOCKED_IS_HOST) {
+    console.log("[GamePage] ✅ Confirmed as GUEST");
+  } else if (IS_HOST && LOCKED_IS_HOST) {
+    console.log("[GamePage] ✅ Confirmed as HOST");
+  } else {
+    console.error("[GamePage] ❌❌❌ MISMATCH DETECTED!");
     alert("Session error detected. Returning to lobby...");
     router.push("/lobby");
     return;
@@ -1125,22 +1274,26 @@ onMounted(async () => {
   playerScores.value = initialScores;
   playerRankings.value = initialRankings;
 
+  console.log("[GamePage] 📊 Initial playerScores:", { ...playerScores.value });
+
   if (IS_HOST) {
-    console.log("[Host] 🎮 Initializing as GAME MASTER");
+    console.log("[GamePage] 🎮 Initializing as GAME MASTER");
     geminiService.resetUsedSentences();
     createRegionSequence();
     await generateAndBroadcastQuiz();
   } else {
     isLoadingQuestion.value = true;
-    console.log("[Guest] ⏳ Waiting for host to broadcast question...");
-    console.log("[Guest] ⚠️ I should NOT generate quiz myself!");
+    console.log("[GamePage] ⏳ Waiting for host to broadcast question...");
+    console.log("[GamePage] ⚠️ I should NOT generate quiz myself!");
   }
 });
 
 onUnmounted(() => {
   if (timerInterval) clearInterval(timerInterval);
+  console.log("[GamePage] Component unmounted");
 });
 </script>
+
 <style scoped>
 .list-move,
 .list-enter-active,
@@ -1233,7 +1386,6 @@ onUnmounted(() => {
   transform: translateX(-30px);
 }
 
-/* ✅ Animasi panah naik yang lebih dramatis */
 @keyframes bounce-up {
   0%,
   100% {
@@ -1282,7 +1434,6 @@ onUnmounted(() => {
   animation: bounce-down 1.5s ease-in-out infinite;
 }
 
-/* ✅ Highlight effect untuk player yang naik */
 .bg-white {
   transition: all 0.3s ease;
 }
@@ -1300,21 +1451,29 @@ onUnmounted(() => {
   border: 1px solid black;
 }
 
-/* 🎉 ANIMASI UNTUK JAWABAN BENAR */
 @keyframes bounce-celebration {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
-  10%, 30%, 50%, 70%, 90% {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: scale(1.05) rotate(-2deg);
   }
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     transform: scale(1.05) rotate(2deg);
   }
 }
 
 @keyframes celebrate-emoji {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1) rotate(0deg);
   }
   25% {
@@ -1329,7 +1488,8 @@ onUnmounted(() => {
 }
 
 @keyframes text-bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -1351,21 +1511,29 @@ onUnmounted(() => {
   }
 }
 
-/* ❌ ANIMASI UNTUK JAWABAN SALAH */
 @keyframes shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
-  10%, 30%, 50%, 70%, 90% {
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
     transform: translateX(-10px);
   }
-  20%, 40%, 60%, 80% {
+  20%,
+  40%,
+  60%,
+  80% {
     transform: translateX(10px);
   }
 }
 
 @keyframes sad-emoji {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
   }
   50% {
@@ -1374,10 +1542,12 @@ onUnmounted(() => {
 }
 
 @keyframes text-shake {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateX(0);
   }
-  25%, 75% {
+  25%,
+  75% {
     transform: translateX(-5px);
   }
   50% {
@@ -1385,7 +1555,6 @@ onUnmounted(() => {
   }
 }
 
-/* 🎊 CONFETTI EFFECT */
 .confetti-container {
   position: fixed;
   top: -10px;
@@ -1411,7 +1580,6 @@ onUnmounted(() => {
   }
 }
 
-/* 💧 RAIN EFFECT untuk jawaban salah */
 .rain-container {
   position: fixed;
   top: -10px;
@@ -1438,7 +1606,6 @@ onUnmounted(() => {
   }
 }
 
-/* Apply animations */
 .animate-bounce-celebration {
   animation: bounce-celebration 1s ease-in-out;
 }

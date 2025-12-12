@@ -19,7 +19,7 @@
       <div class="text-center animate-bounce-in">
         <div class="text-9xl mb-6 animate-spin-slow">🎉</div>
         <h1 class="text-white text-6xl font-bold mb-4 animate-slide-in-up">
-          Game Over!
+          Game Finish!
         </h1>
         <p class="text-yellow-400 text-3xl font-bold animate-slide-in-down">
           Calculating Results...
@@ -195,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useJanusRoom } from "@/composable/UseJanusRoom";
 
@@ -232,8 +232,9 @@ const isHost = ref(storedIsHost);
 const showCelebration = ref(true);
 const celebrationAudio = ref<HTMLAudioElement | null>(null);
 
+
 const JANUS_SERVER = import.meta.env.VITE_JANUS_SERVER;
-const { players, sendMessage, leaveRoom, roomCode, username } = useJanusRoom(JANUS_SERVER);
+const { players, sendMessage, leaveRoom, roomCode, username, messages } = useJanusRoom(JANUS_SERVER);
 
 if (!username.value) username.value = storedUsername;
 if (!roomCode.value) roomCode.value = storedRoomCode;
@@ -245,9 +246,15 @@ interface PlayerScore {
 
 const playerScores = ref<Record<string, number>>({});
 
-// ✅ Load scores dari savedScoresData
 if (savedScoresData && savedScoresData.scores) {
   playerScores.value = savedScoresData.scores;
+  console.log("[FinalScore] ✅ Loaded scores from storage:", playerScores.value);
+} else {
+  // ✅ FALLBACK: Jika tidak ada data, gunakan players dengan score 0
+  console.warn("[FinalScore] ⚠️ No saved scores found, initializing with 0");
+  players.value.forEach((player) => {
+    playerScores.value[player.username] = 0;
+  });
 }
 
 const sortedPlayers = computed(() => {
@@ -336,6 +343,28 @@ async function handleLeaveRoom() {
   localStorage.removeItem("finalScores");
   router.push("/");
 }
+
+watch(
+  messages,
+  (newMessages) => {
+    newMessages.forEach((msg: { type: string; message: string; }) => {
+      if (msg.type !== "chat") return;
+      
+      try {
+        const data = JSON.parse(msg.message);
+        
+        // ✅ Sync scores dari message game_over
+        if (data.type === "game_over" && data.finalScores) {
+          console.log("[FinalScore] 📥 Received final scores from host:", data.finalScores);
+          playerScores.value = { ...data.finalScores };
+        }
+      } catch (e) {
+        console.error("[FinalScore] Parse error:", e);
+      }
+    });
+  },
+  { deep: true }
+);
 
 onMounted(() => {
   console.log("[FinalScore] 🏆 Final scores:", playerScores.value);

@@ -13,7 +13,7 @@
   >
     <!-- Loading Overlay -->
     <div
-      v-if="isLoading"
+      v-if="isLoading || isInitializing"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
     >
       <div
@@ -23,8 +23,15 @@
           class="animate-spin rounded-full h-16 w-16 border-4 border-white border-t-transparent mx-auto mb-4"
         ></div>
         <p class="text-white text-lg">
-          {{ status || "Initializing Janus..." }}
+          {{ connectionStep || status || "Loading..." }}
         </p>
+        <!-- ✅ NEW: Progress indicator -->
+        <div class="w-full bg-gray-200 rounded-full h-2 mt-4">
+          <div
+            class="bg-blue-600 h-2 rounded-full animate-pulse"
+            :style="{ width: isInitializing ? '30%' : '60%' }"
+          ></div>
+        </div>
       </div>
     </div>
 
@@ -179,13 +186,25 @@ const username = ref("");
 
 // Janus composable
 const { init, createRoom, isLoading, error, status } = useJanusRoom();
+const isInitializing = ref(false);
+const connectionStep = ref("");
 
 // Init Janus
 onMounted(async () => {
+  connectionStep.value = "Initializing Janus...";
+  isInitializing.value = true;
+
   try {
     await init();
+    connectionStep.value = "Connected!";
   } catch (err) {
+    connectionStep.value = "Connection failed";
     console.error("Janus init failed:", err);
+  } finally {
+    setTimeout(() => {
+      isInitializing.value = false;
+      connectionStep.value = "";
+    }, 500);
   }
 });
 
@@ -203,10 +222,14 @@ const next = async () => {
     return;
   }
 
+  connectionStep.value = "Creating room...";
+
   try {
     const roomCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
     await createRoom(roomCode, username.value);
+
+    connectionStep.value = "Room created!";
 
     localStorage.setItem("username", username.value);
     localStorage.setItem("roomCode", roomCode);
@@ -214,6 +237,7 @@ const next = async () => {
 
     router.push("/lobby");
   } catch (err) {
+    connectionStep.value = "";
     error.value = err.message || "Gagal membuat room";
   }
 };
