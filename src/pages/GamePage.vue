@@ -70,7 +70,7 @@
         "
       >
         <div
-          class="bg-white rounded-3xl mx-4 w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
+          class="bg-white rounded-3xl w-full h-full mx-4 border- border-red-500 shadow-2xl animate-scale-in"
         >
           <div class="bg-gray-50 rounded-2xl p-6 mb-4">
             <p class="text-black text-center text-xl mb-2">Current Score</p>
@@ -112,7 +112,7 @@
       class="fixed inset-0 w-full bg-black bg-opacity-80 flex items-center justify-center z-50"
     >
       <div
-        class="bg-red-500 backdrop-filter backdrop-blur-lg rounded-3xl mx-auto h-full p-6 w-full mx-0 border border-white border-opacity-20 animate-slide-up"
+        class="bg-red-500 backdrop-filter backdrop-blur-lg rounded-3xl mx-auto h-full p-6 w-full border border-white border-opacity-20 animate-slide-up"
       >
         <h2 class="text-3xl font-bold text-white text-center mb-6">
           Current Scores

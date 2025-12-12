@@ -1,6 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 let Janus: any = null;
+let globalJanusService: JanusDialogenService | null = null;
+let initializationPromise: Promise<void> | null = null;
+
+export function getJanusService(serverUrl: string): JanusDialogenService {
+  if (!globalJanusService) {
+    console.log("[Janus] 🆕 Creating GLOBAL singleton instance");
+    globalJanusService = new JanusDialogenService(serverUrl);
+  } else {
+    console.log("[Janus] ♻️ Reusing existing singleton");
+  }
+  return globalJanusService;
+}
 
 // ✅ Dynamic import - hanya di browser
 async function loadJanus() {
@@ -65,7 +77,11 @@ export class JanusDialogenService {
   private isHost: boolean = false;
   private players: Map<string, Player> = new Map();
 
-  private processedMessageIds = new Set<string>();
+  private processedMessages = new Map<string, number>();
+  private readonly MESSAGE_TTL = 60000; // 1 minute
+  private cleanupInterval: any = null;
+  private participantsDebounceTimer: any = null;
+  private pendingParticipants: any[] = [];
 
   // Callbacks
   private _onPlayerJoinCallbacks: OnPlayerJoinCallback[] = [];
@@ -78,6 +94,11 @@ export class JanusDialogenService {
 
   constructor(serverUrl: string) {
     this.server = serverUrl;
+
+    // ✅ NEW: Auto-cleanup old messages every 30 seconds
+    this.cleanupInterval = setInterval(() => {
+      this._cleanupOldMessages();
+    }, 30000);
   }
 
   // ==================== CALLBACKS ====================
@@ -151,6 +172,21 @@ export class JanusDialogenService {
   private _triggerSettingsUpdate(settings: SettingsUpdate) {
     this._onSettingsUpdateCallbacks.forEach((cb) => cb(settings));
   }
+  private _cleanupOldMessages() {
+    const now = Date.now();
+    let cleaned = 0;
+
+    for (const [msgId, timestamp] of this.processedMessages.entries()) {
+      if (now - timestamp > this.MESSAGE_TTL) {
+        this.processedMessages.delete(msgId);
+        cleaned++;
+      }
+    }
+
+    if (cleaned > 0) {
+      console.log(`[JanusDialogen] 🧹 Cleaned ${cleaned} old messages`);
+    }
+  }
 
   // ==================== INITIALIZATION ====================
 
@@ -161,32 +197,42 @@ export class JanusDialogenService {
       return;
     }
 
-    // Jika sudah initialized, return immediately
+    // ✅ NEW: Prevent multiple simultaneous inits
     if (this._isInitialized && this.janus) {
       console.log("[JanusDialogen] Already initialized, skipping...");
       return;
     }
 
-    // Jika sedang dalam proses init, tunggu
-    if (this._initPromise) {
-      console.log("[JanusDialogen] Waiting for ongoing init...");
-      return this._initPromise;
+    // ✅ NEW: If init in progress, wait for it
+    if (initializationPromise) {
+      console.log("[JanusDialogen] Init in progress, waiting...");
+      return initializationPromise;
     }
 
-    this._initPromise = new Promise<void>(async (resolve, reject) => {
-      console.log("[JanusDialogen] 🚀 Initializing Janus...");
+    // ✅ NEW: Create promise and store globally
+    initializationPromise = this._doInit();
 
-      // ✅ Load Janus dynamically
-      const J = await loadJanus();
-      if (!J) {
-        console.error("[JanusDialogen] ❌ Failed to load Janus library");
-        this._initPromise = null;
-        reject(new Error("Janus library not available"));
-        return;
-      }
+    try {
+      await initializationPromise;
+    } finally {
+      initializationPromise = null;
+    }
+  }
 
+  // ✅ NEW METHOD: Add after init()
+  private async _doInit() {
+    // ✅ PINDAHKAN SEMUA ISI init() LAMA KE SINI
+    console.log("[JanusDialogen] 🚀 Initializing Janus...");
+
+    const J = await loadJanus();
+    if (!J) {
+      console.error("[JanusDialogen] ❌ Failed to load Janus library");
+      throw new Error("Janus library not available");
+    }
+
+    return new Promise<void>((resolve, reject) => {
       J.init({
-        debug: false, // ✅ Set false untuk production
+        debug: false,
         callback: () => {
           console.log("[JanusDialogen] Janus library initialized");
 
@@ -200,12 +246,10 @@ export class JanusDialogenService {
               console.log("[JanusDialogen] ✅ Janus session created");
               this._isInitialized = true;
               this._triggerStatus("Connected to Janus");
-              this._initPromise = null;
               resolve();
             },
             error: (err: any) => {
               console.error("[JanusDialogen] ❌ Session creation failed", err);
-              this._initPromise = null;
               this._isInitialized = false;
               reject(err);
             },
@@ -218,8 +262,6 @@ export class JanusDialogenService {
         },
       });
     });
-
-    return this._initPromise;
   }
 
   // ==================== ROOM MANAGEMENT ====================
@@ -528,17 +570,12 @@ export class JanusDialogenService {
         data.transaction || Date.now()
       }_${data.room || ""}_${data.username || ""}`;
 
-      if (this.processedMessageIds.has(msgId)) {
-        console.log(`[JanusDialogen] 🚫 SKIP DUPLICATE: ${data.textroom}`);
+      if (this.processedMessages.has(msgId)) {
+        console.log("[JanusDialogen] 🚫 SKIP DUPLICATE");
         return;
       }
 
-      this.processedMessageIds.add(msgId);
-
-      if (this.processedMessageIds.size > 100) {
-        const firstKey = this.processedMessageIds.values().next().value;
-        if (firstKey) this.processedMessageIds.delete(firstKey);
-      }
+      this.processedMessages.set(msgId, Date.now());
 
       console.log(`[JanusDialogen] ✅ PROCESSING: ${data.textroom}`);
 
@@ -550,55 +587,21 @@ export class JanusDialogenService {
         Array.isArray(data.participants) &&
         !data.textroom
       ) {
-        console.log("[JanusDialogen] 📋 Processing participants list...");
+        console.log("[JanusDialogen] 📋 Queueing participants...");
 
-        if (meta.participantsProcessed) {
-          console.log(
-            "[JanusDialogen] ⏭️ Participants already processed, skipping"
-          );
-          return;
+        // ✅ NEW: Debounce logic
+        if (this.participantsDebounceTimer) {
+          clearTimeout(this.participantsDebounceTimer);
         }
 
-        meta.participantsProcessed = true;
+        this.pendingParticipants = data.participants;
 
-        const sortedParticipants = [...data.participants].sort((a, b) => {
-          const getTimestamp = (username: string) => {
-            const match = username.match(/_(\d+)$/);
-            return match && match[1] ? parseInt(match[1]) : 0;
-          };
-          return getTimestamp(a.username) - getTimestamp(b.username);
-        });
+        this.participantsDebounceTimer = setTimeout(() => {
+          this._processParticipantsBatch(this.pendingParticipants, meta);
+          this.pendingParticipants = [];
+          this.participantsDebounceTimer = null;
+        }, 300);
 
-        sortedParticipants.forEach((p: any, index: number) => {
-          const displayName = this._extractDisplayName(p.username, p.display);
-
-          if (displayName === meta.username) {
-            console.log(
-              `[JanusDialogen] ⏭️ Skip self in participants: ${displayName}`
-            );
-            return;
-          }
-
-          if (this.players.has(displayName)) {
-            console.log(
-              `[JanusDialogen] ⏭️ Player already exists: ${displayName}`
-            );
-            return;
-          }
-
-          const isParticipantHost = index === 0;
-          const player: Player = {
-            username: displayName,
-            isHost: isParticipantHost,
-            joined_at: new Date().toISOString(),
-          };
-
-          this.players.set(displayName, player);
-          this._triggerPlayerJoin(player);
-          console.log(
-            `[JanusDialogen] ➕ Added from participants: ${displayName}`
-          );
-        });
         return;
       }
 
@@ -784,6 +787,47 @@ export class JanusDialogenService {
     }
   }
 
+  private _processParticipantsBatch(participants: any[], meta: any) {
+    if (meta.participantsProcessed) {
+      console.log("[JanusDialogen] ⏭️ Already processed, skip");
+      return;
+    }
+
+    meta.participantsProcessed = true;
+
+    console.log(
+      `[JanusDialogen] 📋 Processing ${participants.length} participants (batched)`
+    );
+
+    // ✅ Use requestAnimationFrame to avoid blocking UI
+    requestAnimationFrame(() => {
+      const sorted = [...participants].sort((a, b) => {
+        const getTimestamp = (username: string) => {
+          const match = username.match(/_(\d+)$/);
+          return match && match[1] ? parseInt(match[1]) : 0;
+        };
+        return getTimestamp(a.username) - getTimestamp(b.username);
+      });
+
+      sorted.forEach((p: any, index: number) => {
+        const displayName = this._extractDisplayName(p.username, p.display);
+
+        if (displayName === meta.username || this.players.has(displayName)) {
+          return;
+        }
+
+        const player: Player = {
+          username: displayName,
+          isHost: index === 0,
+          joined_at: new Date().toISOString(),
+        };
+
+        this.players.set(displayName, player);
+        this._triggerPlayerJoin(player);
+      });
+    });
+  }
+
   // ==================== SEND MESSAGES ====================
 
   sendMessage(message: string) {
@@ -955,7 +999,7 @@ export class JanusDialogenService {
 
     this.roomPlugin = null;
     this.players.clear();
-    this.processedMessageIds.clear();
+    this.processedMessages.clear();
 
     this.currentRoomCode = "";
     this.currentUsername = "";
@@ -964,6 +1008,13 @@ export class JanusDialogenService {
 
   async destroy() {
     console.log("[JanusDialogen] Destroying...");
+
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
+
+    this.processedMessages.clear();
 
     await this.leaveRoom();
 
@@ -982,8 +1033,6 @@ export class JanusDialogenService {
       this.janus = null;
       this._isInitialized = false;
     }
-
-    this.processedMessageIds.clear();
 
     this._onPlayerJoinCallbacks = [];
     this._onPlayerLeaveCallbacks = [];
