@@ -568,6 +568,7 @@ export function useJanusRoom(
       sessionStorage.clear();
 
       processedMessageIds.clear();
+      await janusService!.destroy();
 
       console.log(`[useJanusRoom:${WINDOW_ID}] ✅ Left room`);
     } catch (err: any) {
