@@ -176,7 +176,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
-// import { useJanusRoom } from "../composable/UseJanusRoom";
+import { useJanusRoom } from "../composable/UseJanusRoom";
 import frame1 from "@/assets/image/Frame.png";
 import dialogentext from "@/assets/image/dialogen.png";
 import menuicon from "@/assets/image/iconmenu.png";

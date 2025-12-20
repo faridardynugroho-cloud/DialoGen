@@ -770,6 +770,7 @@ const handleLeaveRoom = async () => {
   try {
     if (syncInterval) clearInterval(syncInterval);
     await leaveRoom();
+    await 
     localStorage.removeItem("roomCode");
     localStorage.removeItem("username");
     localStorage.removeItem("isHost");
